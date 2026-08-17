@@ -284,7 +284,7 @@ model Order {
   currency              String                @default("INR")
   
   status                String                @default("PENDING")
-  paymentMethod         String                @default("RAZORPAY")
+  paymentMethod         String                @default("COD")
   paymentStatus         String                @default("PENDING")
   
   notes                 String?
@@ -328,7 +328,7 @@ model Payment {
   id                    String                @id @default(cuid())
   orderId               String
   order                 Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  paymentMethod         String                @default("RAZORPAY")
+  paymentMethod         String                @default("COD")
   paymentStatus         String                @default("PENDING")
   amount                Float
   currency              String                @default("INR")

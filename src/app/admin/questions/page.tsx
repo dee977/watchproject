@@ -2,7 +2,7 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatDate } from '@/lib/utils';
 import { MessageSquare, Send, CheckCircle2, User } from 'lucide-react';
-import { AdminQuestionsManager } from './AdminQuestionsManager';
+import { AdminQuestionsManager } from '@/components/admin/AdminQuestionsManager';
 
 export const dynamic = 'force-dynamic';
 

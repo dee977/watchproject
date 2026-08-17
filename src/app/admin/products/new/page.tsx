@@ -1,6 +1,6 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
-import { ProductForm } from '../ProductForm';
+import { ProductForm } from '@/components/admin/ProductForm';
 
 export default async function NewProductPage() {
   const [brands, categories, collections] = await Promise.all([

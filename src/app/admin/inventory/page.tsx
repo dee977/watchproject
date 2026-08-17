@@ -1,7 +1,7 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
-import { InventoryManagerTable } from './InventoryManagerTable';
+import { InventoryManagerTable } from '@/components/admin/InventoryManagerTable';
 
 export const dynamic = 'force-dynamic';
 

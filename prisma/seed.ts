@@ -1015,8 +1015,8 @@ async function main() {
         codFee: 0,
         totalAmount: Math.round(firstProduct.price * 1.18),
         status: 'CONFIRMED',
-        paymentMethod: 'RAZORPAY',
-        paymentStatus: 'PAID',
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
         items: {
           create: {
             productId: firstProduct.id,
@@ -1031,13 +1031,10 @@ async function main() {
         },
         payments: {
           create: {
-            paymentMethod: 'RAZORPAY',
-            paymentStatus: 'PAID',
+            paymentMethod: 'COD',
+            paymentStatus: 'PENDING',
             amount: Math.round(firstProduct.price * 1.18),
-            gatewayPaymentId: 'pay_demo_aur_991823',
-            gatewayOrderId: 'order_demo_aur_991823',
-            gatewaySignature: 'sig_verified_demo_mock',
-            paidAt: new Date(),
+            gatewayPaymentId: 'COD-DEMO-AUR-991823',
           },
         },
         shipments: {

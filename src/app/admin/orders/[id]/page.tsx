@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
-import { OrderStatusBadge } from '@/components/admin/OrderStatusBadge';
+import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import { ArrowLeft, Printer, Truck, ShieldCheck, Mail } from 'lucide-react';
-import { AdminOrderFulfillForm } from './AdminOrderFulfillForm';
+import { AdminOrderFulfillForm } from '@/components/admin/AdminOrderFulfillForm';
 
 interface AdminOrderDetailPageProps {
   params: { id: string };
@@ -155,6 +155,33 @@ export default async function AdminOrderDetailPage({
                   <strong>Client Instructions:</strong> {order.notes}
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Payment & Settlement Snapshot */}
+          <div className="p-6 rounded-xl bg-obsidian-900/40 border border-obsidian-800 space-y-3 text-xs">
+            <h2 className="font-cinzel text-xs uppercase tracking-luxury text-gold-400 font-semibold">
+              Payment & Settlement Protocol
+            </h2>
+            <div className="space-y-1.5 text-gray-300">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Payment Method:</span>
+                <span className="font-semibold text-white">Cash on Delivery (COD)</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Settlement Status:</span>
+                <span className={order.paymentStatus === 'PAID' ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                  {order.paymentStatus === 'PAID' ? 'Paid (Cash Collected Upon Handover)' : 'Pending (Collect Cash on Delivery)'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Amount Due on Handover:</span>
+                <span className="font-mono text-gold-300 font-semibold">{formatPrice(order.totalAmount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">COD Reference:</span>
+                <span className="font-mono text-gray-400">COD-{order.orderNumber}</span>
+              </div>
             </div>
           </div>
         </div>

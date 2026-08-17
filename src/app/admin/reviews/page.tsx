@@ -2,7 +2,7 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatDate } from '@/lib/utils';
 import { Star, ShieldCheck, Check, X, Trash2 } from 'lucide-react';
-import { AdminReviewsModerator } from './AdminReviewsModerator';
+import { AdminReviewsModerator } from '@/components/admin/AdminReviewsModerator';
 
 export const dynamic = 'force-dynamic';
 

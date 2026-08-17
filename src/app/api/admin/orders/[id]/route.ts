@@ -71,6 +71,17 @@ export async function PUT(
       },
     });
 
+    // Update corresponding payment records
+    if (paymentStatus) {
+      await prisma.payment.updateMany({
+        where: { orderId: order.id },
+        data: {
+          paymentStatus,
+          paidAt: paymentStatus === 'PAID' ? new Date() : undefined,
+        },
+      });
+    }
+
     // Update or create shipment if courier/tracking provided
     if (courierName || trackingNumber) {
       if (order.shipments.length > 0) {

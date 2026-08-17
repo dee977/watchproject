@@ -1,0 +1,120 @@
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/schema.prisma', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/seed.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/verify-e2e.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/coupons/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/inventory/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/orders/[id]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/orders/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/products/[id]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/products/new/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/products/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/questions/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/returns/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/reviews/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/settings/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/admin/orders/[id]/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/checkout/create-order/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/admin/AdminSidebar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/types/index.ts', LF will be replaced by CRLF the next time Git touches it
+M	.env.example
+M	prisma/dev.db
+M	prisma/schema.prisma
+M	prisma/seed.ts
+M	scripts/verify-e2e.ts
+D	src/app/(auth)/forgot-password/page.tsx
+D	src/app/(auth)/login/page.tsx
+D	src/app/(auth)/register/page.tsx
+D	src/app/(shop)/about/page.tsx
+D	src/app/(shop)/brands/[brand]/page.tsx
+D	src/app/(shop)/brands/page.tsx
+D	src/app/(shop)/cart/page.tsx
+D	src/app/(shop)/checkout/page.tsx
+D	src/app/(shop)/collections/[slug]/page.tsx
+D	src/app/(shop)/collections/page.tsx
+D	src/app/(shop)/contact/page.tsx
+D	src/app/(shop)/cookies/page.tsx
+D	src/app/(shop)/faq/page.tsx
+D	src/app/(shop)/order/[id]/PrintInvoiceButton.tsx
+D	src/app/(shop)/order/[id]/page.tsx
+D	src/app/(shop)/page.tsx
+D	src/app/(shop)/privacy/page.tsx
+D	src/app/(shop)/product/[slug]/ProductPurchasePanel.tsx
+D	src/app/(shop)/product/[slug]/page.tsx
+D	src/app/(shop)/refunds/page.tsx
+D	src/app/(shop)/returns/page.tsx
+D	src/app/(shop)/search/page.tsx
+D	src/app/(shop)/shipping/page.tsx
+D	src/app/(shop)/terms/page.tsx
+D	src/app/(shop)/track-order/page.tsx
+D	src/app/(shop)/watches/[category]/page.tsx
+D	src/app/(shop)/watches/page.tsx
+D	src/app/(user)/account/AccountNavLinks.tsx
+D	src/app/(user)/account/addresses/AddressManager.tsx
+D	src/app/(user)/account/addresses/page.tsx
+D	src/app/(user)/account/layout.tsx
+D	src/app/(user)/account/orders/[id]/RequestReturnModalTrigger.tsx
+D	src/app/(user)/account/orders/[id]/page.tsx
+D	src/app/(user)/account/orders/page.tsx
+D	src/app/(user)/account/page.tsx
+D	src/app/(user)/account/profile/ProfileForm.tsx
+D	src/app/(user)/account/profile/page.tsx
+D	src/app/(user)/account/security/page.tsx
+D	src/app/(user)/account/wishlist/WishlistGrid.tsx
+D	src/app/(user)/account/wishlist/page.tsx
+D	src/app/admin/coupons/AdminCouponsManager.tsx
+M	src/app/admin/coupons/page.tsx
+D	src/app/admin/inventory/InventoryManagerTable.tsx
+M	src/app/admin/inventory/page.tsx
+D	src/app/admin/orders/[id]/AdminOrderFulfillForm.tsx
+M	src/app/admin/orders/[id]/page.tsx
+M	src/app/admin/orders/page.tsx
+M	src/app/admin/page.tsx
+D	src/app/admin/products/AdminProductRowActions.tsx
+D	src/app/admin/products/ProductForm.tsx
+M	src/app/admin/products/[id]/page.tsx
+M	src/app/admin/products/new/page.tsx
+M	src/app/admin/products/page.tsx
+D	src/app/admin/questions/AdminQuestionsManager.tsx
+M	src/app/admin/questions/page.tsx
+D	src/app/admin/returns/AdminReturnsManager.tsx
+M	src/app/admin/returns/page.tsx
+D	src/app/admin/reviews/AdminReviewsModerator.tsx
+M	src/app/admin/reviews/page.tsx
+D	src/app/admin/settings/SettingsForm.tsx
+M	src/app/admin/settings/page.tsx
+M	src/app/api/admin/orders/[id]/route.ts
+M	src/app/api/checkout/create-order/route.ts
+D	src/app/api/payments/razorpay/create/route.ts
+D	src/app/api/payments/razorpay/verify/route.ts
+D	src/app/api/webhooks/razorpay/route.ts
+M	src/app/layout.tsx
+M	src/components/admin/AdminSidebar.tsx
+D	src/components/admin/OrderStatusBadge.tsx
+D	src/components/layout/CookieConsent.tsx
+D	src/components/layout/Footer.tsx
+D	src/components/layout/Header.tsx
+D	src/components/layout/MobileDrawer.tsx
+D	src/components/shop/CartDrawer.tsx
+D	src/components/shop/FilterDrawer.tsx
+D	src/components/shop/FilterSidebar.tsx
+D	src/components/shop/HeroSlider.tsx
+D	src/components/shop/MobileFilterButton.tsx
+D	src/components/shop/PriceAlertModal.tsx
+D	src/components/shop/Product360Viewer.tsx
+D	src/components/shop/ProductCard.tsx
+D	src/components/shop/ProductGallery.tsx
+D	src/components/shop/ProductGrid.tsx
+D	src/components/shop/QASection.tsx
+D	src/components/shop/QuickViewModal.tsx
+D	src/components/shop/ReviewsSection.tsx
+D	src/components/shop/SearchModal.tsx
+D	src/components/shop/SortSelect.tsx
+D	src/components/shop/SpecificationTable.tsx
+D	src/components/shop/StockNotificationModal.tsx
+D	src/components/shop/WishlistButton.tsx
+D	src/lib/razorpay.ts
+M	src/types/index.ts
+M	tsconfig.tsbuildinfo

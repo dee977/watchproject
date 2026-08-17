@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { ProductForm } from '../ProductForm';
+import { ProductForm } from '@/components/admin/ProductForm';
 
 interface EditProductPageProps {
   params: { id: string };

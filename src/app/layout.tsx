@@ -1,12 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { prisma } from '@/lib/prisma';
-import { getSessionUser } from '@/lib/auth';
 import { getStoreSettings } from '@/lib/store-settings';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
-import { CartDrawer } from '@/components/shop/CartDrawer';
-import { CookieConsent } from '@/components/layout/CookieConsent';
 import { generateOrganizationJsonLd } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -71,19 +65,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [session, settings, brands, categories, collections] = await Promise.all([
-    getSessionUser(),
-    getStoreSettings(),
-    prisma.brand.findMany({ select: { id: true, name: true, slug: true, isFeatured: true }, orderBy: { name: 'asc' } }),
-    prisma.category.findMany({ select: { id: true, name: true, slug: true }, orderBy: { name: 'asc' } }),
-    prisma.collection.findMany({ select: { id: true, name: true, slug: true, coverImage: true } }),
-  ]);
-
   const orgJsonLd = generateOrganizationJsonLd();
 
   return (
@@ -95,18 +81,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-obsidian-950 text-gray-100 antialiased selection:bg-gold-500 selection:text-obsidian-950">
-        <Header
-          brands={brands}
-          categories={categories}
-          collections={collections}
-          user={session ? { id: session.userId, name: session.name, email: session.email, role: session.role } : null}
-        />
-
-        <main className="flex-1">{children}</main>
-
-        <Footer />
-        <CartDrawer freeShippingThreshold={settings.FREE_SHIPPING_THRESHOLD} />
-        <CookieConsent />
+        {children}
       </body>
     </html>
   );

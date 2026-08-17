@@ -25,7 +25,7 @@ const CreateOrderSchema = z.object({
   items: z.array(OrderItemSchema).min(1),
   shippingAddress: AddressSchema,
   billingAddress: AddressSchema.optional(),
-  paymentMethod: z.enum(['RAZORPAY', 'CASH_ON_DELIVERY', 'STRIPE', 'BANK_TRANSFER']),
+  paymentMethod: z.literal('COD').default('COD'),
   couponCode: z.string().optional(),
   deliveryType: z.enum(['STANDARD', 'EXPRESS']).default('STANDARD'),
   customerNotes: z.string().optional(),
@@ -145,8 +145,8 @@ export async function POST(req: NextRequest) {
       shippingAmount = settings.EXPRESS_SHIPPING_FEE;
     }
 
-    // COD Fee
-    const codFee = paymentMethod === 'CASH_ON_DELIVERY' ? settings.COD_FEE : 0;
+    // COD Handling Fee
+    const codFee = settings.COD_FEE;
 
     const totalAmount = taxableSubtotal + taxAmount + shippingAmount + codFee;
 
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const orderNumber = `AUR-${new Date().getFullYear()}-${randomSuffix}`;
 
-    // Create Order Record
+    // Create Order Record with COD payment record
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -172,12 +172,21 @@ export async function POST(req: NextRequest) {
         codFee,
         totalAmount,
         currency: settings.STORE_CURRENCY,
-        status: paymentMethod === 'CASH_ON_DELIVERY' ? 'CONFIRMED' : 'PENDING',
-        paymentMethod,
-        paymentStatus: paymentMethod === 'CASH_ON_DELIVERY' ? 'PENDING' : 'PENDING',
+        status: 'CONFIRMED',
+        paymentMethod: 'COD',
+        paymentStatus: 'PENDING',
         notes: customerNotes,
         items: {
           create: orderItemsData,
+        },
+        payments: {
+          create: {
+            paymentMethod: 'COD',
+            paymentStatus: 'PENDING',
+            amount: totalAmount,
+            currency: settings.STORE_CURRENCY,
+            gatewayPaymentId: `COD-${orderNumber}`,
+          },
         },
       },
       include: {
@@ -185,54 +194,53 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If COD, perform inventory reservation and shipment manifest immediately
-    if (paymentMethod === 'CASH_ON_DELIVERY') {
-      await prisma.$transaction(async (tx) => {
-        // Reserve/decrement stock
-        for (const item of rawItems) {
-          await tx.inventory.update({
-            where: { productId: item.productId },
-            data: {
-              stockQuantity: { decrement: item.quantity },
-              reservedQuantity: { increment: item.quantity },
-            },
-          });
-        }
-
-        // Record coupon usage if applied
-        if (validCouponId) {
-          await tx.couponUsage.create({
-            data: {
-              couponId: validCouponId,
-              userId: session?.userId || null,
-              orderId: order.id,
-            },
-          });
-          await tx.coupon.update({
-            where: { id: validCouponId },
-            data: { usageCount: { increment: 1 } },
-          });
-        }
-
-        // Create Shipment Manifest
-        await tx.shipment.create({
+    // Execute atomic inventory stock deduction and tracking creation
+    await prisma.$transaction(async (tx) => {
+      // Reserve/decrement stock
+      for (const item of rawItems) {
+        await tx.inventory.update({
+          where: { productId: item.productId },
           data: {
-            orderId: order.id,
-            courierName: 'BlueDart Vault Logistics',
-            trackingNumber: `BD${Math.floor(100000000 + Math.random() * 900000000)}IN`,
-            status: 'Processing in Vault Logistics',
-            estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+            stockQuantity: { decrement: item.quantity },
+            reservedQuantity: { increment: item.quantity },
           },
         });
+      }
+
+      // Record coupon usage if applied
+      if (validCouponId) {
+        await tx.couponUsage.create({
+          data: {
+            couponId: validCouponId,
+            userId: session?.userId || null,
+            orderId: order.id,
+          },
+        });
+        await tx.coupon.update({
+          where: { id: validCouponId },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
+
+      // Create Shipment Manifest
+      await tx.shipment.create({
+        data: {
+          orderId: order.id,
+          courierName: 'BlueDart Vault Logistics',
+          trackingNumber: `BD${Math.floor(100000000 + Math.random() * 900000000)}IN`,
+          status: 'Processing in Vault Logistics',
+          estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
       });
-    }
+    });
 
     return NextResponse.json({
       orderId: order.id,
       orderNumber: order.orderNumber,
       totalAmount: order.totalAmount,
       currency: order.currency,
-      paymentMethod: order.paymentMethod,
+      paymentMethod: 'COD',
+      paymentStatus: 'PENDING',
     });
   } catch (error) {
     console.error('Create order error:', error);

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { Plus, Download, Upload, Search, Edit2, Trash2 } from 'lucide-react';
-import { AdminProductRowActions } from './AdminProductRowActions';
+import { AdminProductRowActions } from '@/components/admin/AdminProductRowActions';
 
 interface AdminProductsPageProps {
   searchParams: { q?: string; brand?: string };

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
 import { RotateCcw, ShieldCheck, Check, X, AlertCircle } from 'lucide-react';
-import { AdminReturnsManager } from './AdminReturnsManager';
+import { AdminReturnsManager } from '@/components/admin/AdminReturnsManager';
 
 export const dynamic = 'force-dynamic';
 

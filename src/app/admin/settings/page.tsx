@@ -1,6 +1,6 @@
 import React from 'react';
 import { getStoreSettings } from '@/lib/store-settings';
-import { SettingsForm } from './SettingsForm';
+import { SettingsForm } from '@/components/admin/SettingsForm';
 
 export const dynamic = 'force-dynamic';
 

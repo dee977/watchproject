@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
-import { OrderStatusBadge } from '@/components/admin/OrderStatusBadge';
+import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import { Search, Eye, Filter, Truck } from 'lucide-react';
 
 interface AdminOrdersPageProps {
@@ -133,7 +133,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
                     <td className="p-4">
                       <div className="font-semibold text-white">{formatPrice(order.totalAmount)}</div>
-                      <div className="text-[10px] text-gray-500 uppercase">{order.paymentMethod}</div>
+                      <div className="text-[10px] text-gray-500 uppercase">{order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod}</div>
                     </td>
 
                     <td className="p-4">

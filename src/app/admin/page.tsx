@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { AnalyticsCards } from '@/components/admin/AnalyticsCards';
 import { RevenueChart } from '@/components/admin/RevenueChart';
-import { OrderStatusBadge } from '@/components/admin/OrderStatusBadge';
+import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
 import {

@@ -27,11 +27,7 @@ export type PaymentStatus =
   | 'REFUNDED'
   | 'PARTIALLY_REFUNDED';
 
-export type PaymentMethod =
-  | 'RAZORPAY'
-  | 'CASH_ON_DELIVERY'
-  | 'STRIPE'
-  | 'BANK_TRANSFER';
+export type PaymentMethod = 'COD';
 
 export type ReturnStatus =
   | 'PENDING'

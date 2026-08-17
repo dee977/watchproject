@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
 import { Tag, Plus, Trash2, Calendar, Users } from 'lucide-react';
-import { AdminCouponsManager } from './AdminCouponsManager';
+import { AdminCouponsManager } from '@/components/admin/AdminCouponsManager';
 
 export const dynamic = 'force-dynamic';
 

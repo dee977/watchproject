@@ -141,7 +141,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ userRole = 'ADMIN' }
           <span>PostgreSQL/SQLite Sync Active</span>
         </div>
         <div className="mt-1 text-[10px] text-gray-400">
-          Razorpay Webhook Listener: Ready
+          COD Vault Dispatch: Ready
         </div>
       </div>
     </aside>
