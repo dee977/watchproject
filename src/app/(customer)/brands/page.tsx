@@ -10,12 +10,17 @@ export const metadata = {
 };
 
 export default async function BrandsPage() {
-  const brands = await prisma.brand.findMany({
-    orderBy: { name: 'asc' },
-    include: {
-      _count: { select: { products: true } },
-    },
-  });
+  let brands: any[] = [];
+  try {
+    brands = await prisma.brand.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        _count: { select: { products: true } },
+      },
+    });
+  } catch (error) {
+    console.error('Failed to load brands:', error);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16 space-y-12">

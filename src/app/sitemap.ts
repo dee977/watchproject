@@ -4,12 +4,25 @@ import { prisma } from '@/lib/prisma';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aureliawatches.com';
 
-  const [products, brands, categories, collections] = await Promise.all([
-    prisma.product.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
-    prisma.brand.findMany({ select: { slug: true, updatedAt: true } }),
-    prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
-    prisma.collection.findMany({ select: { slug: true, updatedAt: true } }),
-  ]);
+  let products: any[] = [];
+  let brands: any[] = [];
+  let categories: any[] = [];
+  let collections: any[] = [];
+
+  try {
+    const [p, b, c, col] = await Promise.all([
+      prisma.product.findMany({ where: { isPublished: true }, select: { slug: true, updatedAt: true } }),
+      prisma.brand.findMany({ select: { slug: true, updatedAt: true } }),
+      prisma.category.findMany({ select: { slug: true, updatedAt: true } }),
+      prisma.collection.findMany({ select: { slug: true, updatedAt: true } }),
+    ]);
+    products = p;
+    brands = b;
+    categories = c;
+    collections = col;
+  } catch (error) {
+    console.error('Failed to query database for sitemap:', error);
+  }
 
   const staticRoutes = [
     '',

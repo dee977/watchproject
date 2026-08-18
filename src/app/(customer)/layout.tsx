@@ -1,4 +1,4 @@
-import React, { cache } from 'react';
+import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
 import { getStoreSettings } from '@/lib/store-settings';
@@ -7,14 +7,18 @@ import { Footer } from '@/components/customer/layout/Footer';
 import { CartDrawer } from '@/components/customer/shop/CartDrawer';
 import { CookieConsent } from '@/components/customer/layout/CookieConsent';
 
-const getLayoutNavigationData = cache(async () => {
-  const [brands, categories, collections] = await Promise.all([
-    prisma.brand.findMany({ select: { id: true, name: true, slug: true, isFeatured: true }, orderBy: { name: 'asc' } }),
-    prisma.category.findMany({ select: { id: true, name: true, slug: true }, orderBy: { name: 'asc' } }),
-    prisma.collection.findMany({ select: { id: true, name: true, slug: true, coverImage: true } }),
-  ]);
-  return { brands, categories, collections };
-});
+const getLayoutNavigationData = async () => {
+  try {
+    const [brands, categories, collections] = await Promise.all([
+      prisma.brand.findMany({ select: { id: true, name: true, slug: true, isFeatured: true }, orderBy: { name: 'asc' } }),
+      prisma.category.findMany({ select: { id: true, name: true, slug: true }, orderBy: { name: 'asc' } }),
+      prisma.collection.findMany({ select: { id: true, name: true, slug: true, coverImage: true } }),
+    ]);
+    return { brands, categories, collections };
+  } catch (error) {
+    return { brands: [], categories: [], collections: [] };
+  }
+};
 
 export default async function CustomerLayout({
   children,

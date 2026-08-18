@@ -1,4 +1,5 @@
-import { cache } from 'react';
+import { cache as reactCache } from 'react';
+const cache = typeof reactCache === 'function' ? reactCache : (<T extends (...args: any[]) => any>(fn: T): T => fn);
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';

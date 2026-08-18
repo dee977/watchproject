@@ -18,37 +18,50 @@ export default async function HomePage() {
     reviews: { where: { isApproved: true }, select: { rating: true } },
   };
 
-  const [trendingProducts, newArrivals, bestSellers] = await Promise.all([
-    prisma.product.findMany({
-      where: { isPublished: true, isFeatured: true },
-      take: 4,
-      include: productInclude,
-    }),
-    prisma.product.findMany({
-      where: { isPublished: true, isNewArrival: true },
-      take: 4,
-      include: productInclude,
-    }),
-    prisma.product.findMany({
-      where: { isPublished: true, isBestSeller: true },
-      take: 4,
-      include: productInclude,
-    }),
-  ]);
+  let trendingProducts: any[] = [];
+  let newArrivals: any[] = [];
+  let bestSellers: any[] = [];
+  let featuredBrands: any[] = [];
+  let featuredCollections: any[] = [];
 
-  const [featuredBrands, featuredCollections] = await Promise.all([
-    prisma.brand.findMany({
-      where: { isFeatured: true },
-      take: 6,
-    }),
-    prisma.collection.findMany({
-      where: { isFeatured: true },
-      take: 4,
-      include: {
-        _count: { select: { products: true } },
-      },
-    }),
-  ]);
+  try {
+    const [trending, arrivals, best, brands, collections] = await Promise.all([
+      prisma.product.findMany({
+        where: { isPublished: true, isFeatured: true },
+        take: 4,
+        include: productInclude,
+      }),
+      prisma.product.findMany({
+        where: { isPublished: true, isNewArrival: true },
+        take: 4,
+        include: productInclude,
+      }),
+      prisma.product.findMany({
+        where: { isPublished: true, isBestSeller: true },
+        take: 4,
+        include: productInclude,
+      }),
+      prisma.brand.findMany({
+        where: { isFeatured: true },
+        take: 6,
+      }),
+      prisma.collection.findMany({
+        where: { isFeatured: true },
+        take: 4,
+        include: {
+          _count: { select: { products: true } },
+        },
+      }),
+    ]);
+
+    trendingProducts = trending;
+    newArrivals = arrivals;
+    bestSellers = best;
+    featuredBrands = brands;
+    featuredCollections = collections;
+  } catch (error) {
+    console.error('Home page data fetching error:', error);
+  }
 
   const mapProductToCard = (p: any): ProductCardData => {
     const reviewCount = p.reviews.length;

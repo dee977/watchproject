@@ -10,12 +10,17 @@ export const metadata = {
 };
 
 export default async function CollectionsPage() {
-  const collections = await prisma.collection.findMany({
-    include: {
-      _count: { select: { products: true } },
-    },
-    orderBy: { name: 'asc' },
-  });
+  let collections: any[] = [];
+  try {
+    collections = await prisma.collection.findMany({
+      include: {
+        _count: { select: { products: true } },
+      },
+      orderBy: { name: 'asc' },
+    });
+  } catch (error) {
+    console.error('Failed to load collections:', error);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-16 space-y-12">

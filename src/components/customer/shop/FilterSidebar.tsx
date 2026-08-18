@@ -25,7 +25,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   categories,
   movements,
   materials = ['316L Stainless Steel', 'Super Titanium', '18K Rose Gold', 'Ceramic', 'Leather'],
-  maxPriceLimit = 500000,
+  maxPriceLimit = 5000,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -137,9 +137,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </div>
         <input
           type="range"
-          min={10000}
+          min={500}
           max={maxPriceLimit}
-          step={5000}
+          step={100}
           value={maxPrice}
           onChange={(e) => handlePriceChange(Number(e.target.value))}
           className="w-full accent-gold-500 bg-obsidian-800 h-1.5 rounded-lg appearance-none cursor-pointer"
