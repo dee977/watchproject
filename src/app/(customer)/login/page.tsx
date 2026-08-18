@@ -45,6 +45,11 @@ function LoginForm() {
     }
   };
 
+  const handleDemoAdmin = () => {
+    setEmail('admin@aurelia.com');
+    setPassword('Admin@123456');
+  };
+
   const handleDemoCustomer = () => {
     setEmail('vikram@royalhorology.com');
     setPassword('Collector@123');
@@ -67,20 +72,25 @@ function LoginForm() {
       {/* Demo Credentials Quick Fill Bar */}
       <div className="p-4 rounded-lg bg-obsidian-900/80 border border-gold-500/30 text-xs space-y-2">
         <div className="flex items-center justify-between text-gold-300 font-semibold font-cinzel">
-          <span>Demo Account:</span>
-          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-mono">One-Click Fill</span>
+          <span>Quick Sign-In Autofill:</span>
+          <span className="text-[10px] uppercase tracking-wider text-gray-400 font-mono">Select Role</span>
         </div>
-        <div className="pt-1">
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={handleDemoAdmin}
+            className="p-2.5 rounded bg-obsidian-950 border border-gold-500/30 hover:border-gold-500 text-[11px] text-gray-300 hover:text-white transition-colors text-left flex flex-col justify-between"
+          >
+            <strong className="block text-gold-400 font-medium font-cinzel">Super Admin</strong>
+            <span className="text-gray-500 text-[10px] truncate">admin@aurelia.com</span>
+          </button>
           <button
             type="button"
             onClick={handleDemoCustomer}
-            className="w-full p-2.5 rounded bg-obsidian-950 border border-obsidian-800 hover:border-gold-500/50 text-[11px] text-gray-300 hover:text-white transition-colors text-left flex items-center justify-between"
+            className="p-2.5 rounded bg-obsidian-950 border border-obsidian-800 hover:border-gold-500/50 text-[11px] text-gray-300 hover:text-white transition-colors text-left flex flex-col justify-between"
           >
-            <div>
-              <strong className="block text-gold-400 font-medium">VIP Collector</strong>
-              <span className="text-gray-500 text-[10px]">vikram@royalhorology.com</span>
-            </div>
-            <span className="text-[10px] text-gold-400/80 border border-gold-500/20 px-2 py-0.5 rounded">Autofill</span>
+            <strong className="block text-gray-300 font-medium font-cinzel">VIP Collector</strong>
+            <span className="text-gray-500 text-[10px] truncate">vikram@royalhorology...</span>
           </button>
         </div>
       </div>
