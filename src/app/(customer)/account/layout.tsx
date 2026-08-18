@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { AccountNavLinks } from './AccountNavLinks';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AccountLayout({
   children,
 }: {

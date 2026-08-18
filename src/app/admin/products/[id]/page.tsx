@@ -7,6 +7,8 @@ interface EditProductPageProps {
   params: { id: string };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const [product, brands, categories, collections] = await Promise.all([
     prisma.product.findUnique({

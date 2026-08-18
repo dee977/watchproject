@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { prisma } from './prisma';
 
 export interface StoreSettingsMap {
@@ -36,7 +37,7 @@ const DEFAULT_SETTINGS: StoreSettingsMap = {
   HERO_SUBTITLE: 'Discover exceptional handcrafted horological masterpieces engineered for eternity.',
 };
 
-export async function getStoreSettings(): Promise<StoreSettingsMap> {
+export const getStoreSettings = cache(async (): Promise<StoreSettingsMap> => {
   try {
     const settings = await prisma.siteSetting.findMany();
     const map: Record<string, string> = {};
@@ -63,7 +64,7 @@ export async function getStoreSettings(): Promise<StoreSettingsMap> {
   } catch (error) {
     return DEFAULT_SETTINGS;
   }
-}
+});
 
 export async function updateStoreSetting(key: string, value: string, description?: string) {
   return prisma.siteSetting.upsert({

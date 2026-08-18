@@ -10,53 +10,37 @@ import { ArrowRight, Sparkles, Award, Compass, ChevronRight } from 'lucide-react
 export const revalidate = 60; // ISR revalidate every 60 seconds
 
 export default async function HomePage() {
-  const [trendingProducts, newArrivals, bestSellers, featuredBrands, featuredCollections] = await Promise.all([
-    // Trending / Featured
+  const productInclude = {
+    brand: { select: { name: true, slug: true } },
+    category: { select: { name: true, slug: true } },
+    images: { orderBy: { displayOrder: 'asc' as const } },
+    inventory: { select: { stockQuantity: true } },
+    reviews: { where: { isApproved: true }, select: { rating: true } },
+  };
+
+  const [trendingProducts, newArrivals, bestSellers] = await Promise.all([
     prisma.product.findMany({
       where: { isPublished: true, isFeatured: true },
       take: 4,
-      include: {
-        brand: { select: { name: true, slug: true } },
-        category: { select: { name: true, slug: true } },
-        images: { orderBy: { displayOrder: 'asc' } },
-        inventory: { select: { stockQuantity: true } },
-        reviews: { where: { isApproved: true }, select: { rating: true } },
-      },
+      include: productInclude,
     }),
-
-    // New Arrivals
     prisma.product.findMany({
       where: { isPublished: true, isNewArrival: true },
       take: 4,
-      include: {
-        brand: { select: { name: true, slug: true } },
-        category: { select: { name: true, slug: true } },
-        images: { orderBy: { displayOrder: 'asc' } },
-        inventory: { select: { stockQuantity: true } },
-        reviews: { where: { isApproved: true }, select: { rating: true } },
-      },
+      include: productInclude,
     }),
-
-    // Best Sellers
     prisma.product.findMany({
       where: { isPublished: true, isBestSeller: true },
       take: 4,
-      include: {
-        brand: { select: { name: true, slug: true } },
-        category: { select: { name: true, slug: true } },
-        images: { orderBy: { displayOrder: 'asc' } },
-        inventory: { select: { stockQuantity: true } },
-        reviews: { where: { isApproved: true }, select: { rating: true } },
-      },
+      include: productInclude,
     }),
+  ]);
 
-    // Featured Brands
+  const [featuredBrands, featuredCollections] = await Promise.all([
     prisma.brand.findMany({
       where: { isFeatured: true },
       take: 6,
     }),
-
-    // Featured Collections
     prisma.collection.findMany({
       where: { isFeatured: true },
       take: 4,

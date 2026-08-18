@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
@@ -34,7 +35,7 @@ export function verifyToken(token: string): TokenPayload | null {
   }
 }
 
-export async function getSessionUser(): Promise<TokenPayload | null> {
+export const getSessionUser = cache(async (): Promise<TokenPayload | null> => {
   try {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -60,7 +61,7 @@ export async function getSessionUser(): Promise<TokenPayload | null> {
   } catch (error) {
     return null;
   }
-}
+});
 
 export function hasAdminAccess(role?: Role | string | null): boolean {
   if (!role) return false;
