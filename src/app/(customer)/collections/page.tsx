@@ -55,7 +55,7 @@ export default async function CollectionsPage() {
 
             <div className="relative z-10 space-y-2 max-w-lg">
               <span className="text-xs uppercase tracking-luxury text-gold-400 font-cinzel font-semibold">
-                {col._count.products} Registered References
+                {col._count?.products ?? 0} Registered References
               </span>
               <h2 className="text-2xl sm:text-3xl font-cinzel font-bold text-white group-hover:text-gold-300 transition-colors">
                 {col.name}

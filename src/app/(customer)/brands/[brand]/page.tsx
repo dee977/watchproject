@@ -17,9 +17,14 @@ export default async function BrandCatalogPage({
   params,
   searchParams,
 }: BrandCatalogPageProps) {
-  const brand = await prisma.brand.findUnique({
-    where: { slug: params.brand },
-  });
+  let brand: any = null;
+  try {
+    brand = await prisma.brand.findUnique({
+      where: { slug: params.brand },
+    });
+  } catch (err) {
+    console.error('Brand lookup error:', err);
+  }
 
   if (!brand) {
     notFound();
@@ -31,26 +36,31 @@ export default async function BrandCatalogPage({
   if (sort === 'price-desc') orderBy = { price: 'desc' };
   if (sort === 'popular') orderBy = { isBestSeller: 'desc' };
 
-  const products = await prisma.product.findMany({
-    where: {
-      brandId: brand.id,
-      isPublished: true,
-    },
-    orderBy,
-    include: {
-      brand: { select: { name: true, slug: true } },
-      category: { select: { name: true, slug: true } },
-      images: { orderBy: { displayOrder: 'asc' } },
-      inventory: { select: { stockQuantity: true } },
-      reviews: { where: { isApproved: true }, select: { rating: true } },
-    },
-  });
+  let products: any[] = [];
+  try {
+    products = await prisma.product.findMany({
+      where: {
+        brandId: brand.id,
+        isPublished: true,
+      },
+      orderBy,
+      include: {
+        brand: { select: { name: true, slug: true } },
+        category: { select: { name: true, slug: true } },
+        images: { orderBy: { displayOrder: 'asc' } },
+        inventory: { select: { stockQuantity: true } },
+        reviews: { where: { isApproved: true }, select: { rating: true } },
+      },
+    });
+  } catch (err) {
+    console.error('Brand products query error:', err);
+  }
 
   const formatted: ProductCardData[] = products.map((p) => {
-    const reviewCount = p.reviews.length;
+    const reviewCount = p.reviews?.length || 0;
     const averageRating =
       reviewCount > 0
-        ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        ? p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
         : 0;
 
     return {

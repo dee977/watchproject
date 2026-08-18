@@ -21,12 +21,12 @@ export interface QuickViewProduct {
   brand: string;
   price: number;
   mrp: number;
-  discountPercent?: number;
-  movement: string;
+  discountPercent?: number | null;
+  movement?: string | null;
   caseDiameter?: string | null;
   waterResistance?: string | null;
   shortDescription?: string | null;
-  description: string;
+  description?: string | null;
   stockQuantity: number;
   images: Array<{ url: string; altText?: string | null }>;
 }
@@ -190,7 +190,7 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({
                 {/* Micro Specs */}
                 <div className="grid grid-cols-2 gap-2 text-[11px] pt-2 border-t border-obsidian-800">
                   <div className="text-gray-400">
-                    Movement: <strong className="text-gray-200">{product.movement}</strong>
+                    Movement: <strong className="text-gray-200">{product.movement || 'Automatic'}</strong>
                   </div>
                   {product.caseDiameter && (
                     <div className="text-gray-400">

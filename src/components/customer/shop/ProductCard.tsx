@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import Image from 'next/image';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Eye, ShoppingBag, Star, Check } from 'lucide-react';
+import Image from 'next/image';
+import { Eye, ShoppingBag, Check, Star } from 'lucide-react';
 import { formatPrice } from '@/lib/currency';
-import { WishlistButton } from './WishlistButton';
 import { useCartStore } from '@/lib/cart-store';
+import { WishlistButton } from './WishlistButton';
 import { QuickViewModal, QuickViewProduct } from './QuickViewModal';
 import {
   getProductPrimaryImage,
@@ -20,16 +20,16 @@ export interface ProductCardData {
   name: string;
   slug: string;
   sku: string;
-  brand: { name: string; slug: string };
-  category?: { name: string; slug: string };
+  brand: { name: string; slug?: string } | string;
+  category?: { name: string; slug?: string } | string;
   price: number;
   mrp: number;
-  discountPercent?: number;
-  movement: string;
+  discountPercent?: number | null;
+  movement?: string | null;
   caseDiameter?: string | null;
   waterResistance?: string | null;
   shortDescription?: string | null;
-  description: string;
+  description?: string | null;
   isFeatured?: boolean;
   isNewArrival?: boolean;
   isBestSeller?: boolean;
@@ -52,19 +52,32 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
-  const initialPrimary = getProductPrimaryImage(product.images);
-  const initialSecondary = getProductSecondaryImage(product.images);
+  const brandName = typeof product?.brand === 'string' ? product.brand : product?.brand?.name || 'AURELIA';
+  const brandSlug = typeof product?.brand === 'string' ? product.brand.toLowerCase().replace(/\s+/g, '-') : product?.brand?.slug || 'watches';
 
-  const [primaryImageSrc, setPrimaryImageSrc] = useState(initialPrimary);
-  const [secondaryImageSrc, setSecondaryImageSrc] = useState(initialSecondary);
+  const resolvedPrimary = getProductPrimaryImage(product?.images);
+  const resolvedSecondary = getProductSecondaryImage(product?.images);
+
+  const [hasPrimaryError, setHasPrimaryError] = useState(false);
+  const [hasSecondaryError, setHasSecondaryError] = useState(false);
+
+  // Reset image errors if product changes
+  useEffect(() => {
+    setHasPrimaryError(false);
+    setHasSecondaryError(false);
+  }, [product?.id, resolvedPrimary, resolvedSecondary]);
+
+  const activePrimary = hasPrimaryError ? FALLBACK_WATCH_IMAGE : (resolvedPrimary || FALLBACK_WATCH_IMAGE);
+  const activeSecondary = hasSecondaryError ? FALLBACK_SECONDARY_WATCH_IMAGE : (resolvedSecondary || activePrimary);
 
   const addItem = useCartStore((state) => state.addItem);
 
-  const isOutOfStock = product.stockQuantity <= 0;
-  const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= 3;
+  const stock = product?.stockQuantity ?? 0;
+  const isOutOfStock = stock <= 0;
+  const isLowStock = stock > 0 && stock <= 3;
   const discount =
-    product.discountPercent ||
-    (product.mrp > product.price
+    product?.discountPercent ||
+    (product?.mrp > product?.price
       ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
       : 0);
 
@@ -79,11 +92,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       name: product.name,
       slug: product.slug,
       sku: product.sku,
-      brand: product.brand.name,
+      brand: brandName,
       price: product.price,
       mrp: product.mrp,
-      image: primaryImageSrc,
-      maxStock: product.stockQuantity,
+      image: activePrimary,
+      maxStock: stock,
     });
 
     setJustAdded(true);
@@ -95,7 +108,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     name: product.name,
     slug: product.slug,
     sku: product.sku,
-    brand: product.brand.name,
+    brand: brandName,
     price: product.price,
     mrp: product.mrp,
     discountPercent: discount,
@@ -104,7 +117,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     waterResistance: product.waterResistance,
     shortDescription: product.shortDescription,
     description: product.description,
-    stockQuantity: product.stockQuantity,
+    stockQuantity: stock,
     images: product.images,
   };
 
@@ -116,12 +129,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="relative w-full md:w-56 aspect-square rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
             <Link href={`/product/${product.slug}`} className="block h-full w-full">
               <Image
-                src={primaryImageSrc}
+                src={activePrimary}
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 224px"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={() => setPrimaryImageSrc(FALLBACK_WATCH_IMAGE)}
+                onError={() => setHasPrimaryError(true)}
               />
             </Link>
 
@@ -131,10 +144,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   productId: product.id,
                   name: product.name,
                   slug: product.slug,
-                  brand: product.brand.name,
+                  brand: brandName,
                   price: product.price,
                   mrp: product.mrp,
-                  image: primaryImageSrc,
+                  image: activePrimary,
                 }}
               />
             </div>
@@ -145,10 +158,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <div>
               <div className="flex items-center gap-3 text-xs mb-1">
                 <Link
-                  href={`/brands/${product.brand.slug}`}
+                  href={`/brands/${brandSlug}`}
                   className="uppercase tracking-luxury text-gold-400 font-cinzel font-semibold hover:underline"
                 >
-                  {product.brand.name}
+                  {brandName}
                 </Link>
                 <span className="text-gray-500">•</span>
                 <span className="text-gray-400 font-mono text-[11px]">{product.sku}</span>
@@ -166,9 +179,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
               {/* Specs Pills */}
               <div className="flex flex-wrap gap-2 mt-3 text-[11px] text-gray-300">
-                <span className="px-2.5 py-0.5 rounded bg-obsidian-950 border border-obsidian-800">
-                  ⚙️ {product.movement}
-                </span>
+                {product.movement && (
+                  <span className="px-2.5 py-0.5 rounded bg-obsidian-950 border border-obsidian-800">
+                    ⚙️ {product.movement}
+                  </span>
+                )}
                 {product.caseDiameter && (
                   <span className="px-2.5 py-0.5 rounded bg-obsidian-950 border border-obsidian-800">
                     📏 {product.caseDiameter}
@@ -269,10 +284,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               productId: product.id,
               name: product.name,
               slug: product.slug,
-              brand: product.brand.name,
+              brand: brandName,
               price: product.price,
               mrp: product.mrp,
-              image: primaryImageSrc,
+              image: activePrimary,
             }}
           />
         </div>
@@ -281,16 +296,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="relative aspect-square w-full bg-obsidian-950 overflow-hidden">
           <Link href={`/product/${product.slug}`} className="block w-full h-full">
             <Image
-              src={isHovered && secondaryImageSrc ? secondaryImageSrc : primaryImageSrc}
+              src={isHovered ? activeSecondary : activePrimary}
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover group-hover:scale-105 transition-all duration-700 ease-out"
               onError={() => {
-                if (isHovered && secondaryImageSrc) {
-                  setSecondaryImageSrc(FALLBACK_SECONDARY_WATCH_IMAGE);
+                if (isHovered) {
+                  setHasSecondaryError(true);
                 } else {
-                  setPrimaryImageSrc(FALLBACK_WATCH_IMAGE);
+                  setHasPrimaryError(true);
                 }
               }}
             />
@@ -325,12 +340,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
               <Link
-                href={`/brands/${product.brand.slug}`}
+                href={`/brands/${brandSlug}`}
                 className="uppercase tracking-luxury text-gold-400 font-cinzel font-semibold hover:underline"
               >
-                {product.brand.name}
+                {brandName}
               </Link>
-              <span className="text-[10px] text-gray-500 font-mono">{product.movement}</span>
+              {product.movement && (
+                <span className="text-[10px] text-gray-500 font-mono">{product.movement}</span>
+              )}
             </div>
 
             <Link href={`/product/${product.slug}`} className="block">

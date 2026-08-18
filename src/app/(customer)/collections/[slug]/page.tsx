@@ -14,9 +14,14 @@ export default async function CollectionDetailPage({
   params,
   searchParams,
 }: CollectionDetailPageProps) {
-  const collection = await prisma.collection.findUnique({
-    where: { slug: params.slug },
-  });
+  let collection: any = null;
+  try {
+    collection = await prisma.collection.findUnique({
+      where: { slug: params.slug },
+    });
+  } catch (err) {
+    console.error('Collection query error:', err);
+  }
 
   if (!collection) {
     notFound();
@@ -28,23 +33,28 @@ export default async function CollectionDetailPage({
   if (sort === 'price-desc') orderBy = { price: 'desc' };
   if (sort === 'popular') orderBy = { isBestSeller: 'desc' };
 
-  const products = await prisma.product.findMany({
-    where: {
-      collectionId: collection.id,
-      isPublished: true,
-    },
-    orderBy,
-    include: {
-      brand: { select: { name: true, slug: true } },
-      category: { select: { name: true, slug: true } },
-      images: { orderBy: { displayOrder: 'asc' } },
-      inventory: { select: { stockQuantity: true } },
-      reviews: { where: { isApproved: true }, select: { rating: true } },
-    },
-  });
+  let products: any[] = [];
+  try {
+    products = await prisma.product.findMany({
+      where: {
+        collectionId: collection.id,
+        isPublished: true,
+      },
+      orderBy,
+      include: {
+        brand: { select: { name: true, slug: true } },
+        category: { select: { name: true, slug: true } },
+        images: { orderBy: { displayOrder: 'asc' } },
+        inventory: { select: { stockQuantity: true } },
+        reviews: { where: { isApproved: true }, select: { rating: true } },
+      },
+    });
+  } catch (err) {
+    console.error('Collection products query error:', err);
+  }
 
   const formatted: ProductCardData[] = products.map((p) => {
-    const reviewCount = p.reviews.length;
+    const reviewCount = p.reviews?.length || 0;
     const averageRating =
       reviewCount > 0
         ? p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount

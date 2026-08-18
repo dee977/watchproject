@@ -186,7 +186,7 @@ export default async function HomePage() {
 
               <div className="relative z-10 space-y-2">
                 <span className="text-[10px] uppercase tracking-luxury text-gold-400 font-cinzel font-semibold">
-                  {col._count.products} Reference Editions
+                  {col._count?.products ?? 0} Reference Editions
                 </span>
                 <h3 className="text-xl font-cinzel font-bold text-white group-hover:text-gold-300 transition-colors">
                   {col.name}

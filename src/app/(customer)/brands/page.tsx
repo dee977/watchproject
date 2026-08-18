@@ -49,7 +49,7 @@ export default async function BrandsPage() {
                   {brand.originCountry} • Est. {brand.foundedYear}
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] bg-obsidian-950 border border-obsidian-800 text-gray-400 font-mono">
-                  {brand._count.products} Editions
+                  {brand._count?.products ?? 0} Editions
                 </span>
               </div>
 

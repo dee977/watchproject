@@ -94,36 +94,49 @@ export default async function WatchesPage({ searchParams }: WatchesPageProps) {
   if (sort === 'newest') orderBy = { createdAt: 'desc' };
   if (sort === 'popular') orderBy = { isBestSeller: 'desc' };
 
-  const [totalCount, products, allBrands, allCategories] = await Promise.all([
-    prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        brand: { select: { name: true, slug: true } },
-        category: { select: { name: true, slug: true } },
-        images: { orderBy: { displayOrder: 'asc' } },
-        inventory: { select: { stockQuantity: true } },
-        reviews: { where: { isApproved: true }, select: { rating: true } },
-      },
-    }),
-    prisma.brand.findMany({
-      select: { name: true, slug: true, _count: { select: { products: true } } },
-      orderBy: { name: 'asc' },
-    }),
-    prisma.category.findMany({
-      select: { name: true, slug: true, _count: { select: { products: true } } },
-      orderBy: { name: 'asc' },
-    }),
-  ]);
+  let totalCount = 0;
+  let products: any[] = [];
+  let allBrands: any[] = [];
+  let allCategories: any[] = [];
+
+  try {
+    const [countRes, prodsRes, brandsRes, catsRes] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          brand: { select: { name: true, slug: true } },
+          category: { select: { name: true, slug: true } },
+          images: { orderBy: { displayOrder: 'asc' } },
+          inventory: { select: { stockQuantity: true } },
+          reviews: { where: { isApproved: true }, select: { rating: true } },
+        },
+      }),
+      prisma.brand.findMany({
+        select: { name: true, slug: true, _count: { select: { products: true } } },
+        orderBy: { name: 'asc' },
+      }),
+      prisma.category.findMany({
+        select: { name: true, slug: true, _count: { select: { products: true } } },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
+    totalCount = countRes;
+    products = prodsRes;
+    allBrands = brandsRes;
+    allCategories = catsRes;
+  } catch (error) {
+    console.error('Watches catalogue query error:', error);
+  }
 
   const formattedProducts: ProductCardData[] = products.map((p) => {
-    const reviewCount = p.reviews.length;
+    const reviewCount = p.reviews?.length || 0;
     const averageRating =
       reviewCount > 0
-        ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        ? p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
         : 0;
 
     return {

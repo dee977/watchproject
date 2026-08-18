@@ -50,33 +50,42 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const [product, session] = await Promise.all([
-    prisma.product.findUnique({
-      where: { slug: params.slug },
-      include: {
-        brand: true,
-        category: true,
-        collection: true,
-        inventory: true,
-        images: { orderBy: { displayOrder: 'asc' } },
-        specifications: { orderBy: { displayOrder: 'asc' } },
-        reviews: {
-          where: { isApproved: true },
-          include: { user: { select: { name: true } } },
-          orderBy: { createdAt: 'desc' },
-        },
-        questions: {
-          where: { isApproved: true },
-          include: {
-            user: { select: { name: true, email: true } },
-            answers: { orderBy: { createdAt: 'asc' } },
+  let product: any = null;
+  let session: any = null;
+
+  try {
+    const [prodRes, sessRes] = await Promise.all([
+      prisma.product.findUnique({
+        where: { slug: params.slug },
+        include: {
+          brand: true,
+          category: true,
+          collection: true,
+          inventory: true,
+          images: { orderBy: { displayOrder: 'asc' } },
+          specifications: { orderBy: { displayOrder: 'asc' } },
+          reviews: {
+            where: { isApproved: true },
+            include: { user: { select: { name: true } } },
+            orderBy: { createdAt: 'desc' },
           },
-          orderBy: { createdAt: 'desc' },
+          questions: {
+            where: { isApproved: true },
+            include: {
+              user: { select: { name: true, email: true } },
+              answers: { orderBy: { createdAt: 'asc' } },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
         },
-      },
-    }),
-    getSessionUser(),
-  ]);
+      }),
+      getSessionUser(),
+    ]);
+    product = prodRes;
+    session = sessRes;
+  } catch (err) {
+    console.error('Product detail query error:', err);
+  }
 
   if (!product || !product.isPublished) {
     notFound();
@@ -89,28 +98,33 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   }).catch(() => {});
 
   // Fetch related products
-  const relatedProducts = await prisma.product.findMany({
-    where: {
-      isPublished: true,
-      id: { not: product.id },
-      OR: [
-        { brandId: product.brandId },
-        { categoryId: product.categoryId },
-      ],
-    },
-    take: 4,
-    include: {
-      brand: { select: { name: true, slug: true } },
-      category: { select: { name: true, slug: true } },
-      images: { orderBy: { displayOrder: 'asc' } },
-      inventory: { select: { stockQuantity: true } },
-      reviews: { where: { isApproved: true }, select: { rating: true } },
-    },
-  });
+  let relatedProducts: any[] = [];
+  try {
+    relatedProducts = await prisma.product.findMany({
+      where: {
+        isPublished: true,
+        id: { not: product.id },
+        OR: [
+          { brandId: product.brandId },
+          { categoryId: product.categoryId },
+        ],
+      },
+      take: 4,
+      include: {
+        brand: { select: { name: true, slug: true } },
+        category: { select: { name: true, slug: true } },
+        images: { orderBy: { displayOrder: 'asc' } },
+        inventory: { select: { stockQuantity: true } },
+        reviews: { where: { isApproved: true }, select: { rating: true } },
+      },
+    });
+  } catch (err) {
+    console.error('Related products query error:', err);
+  }
 
   const formattedRelated: ProductCardData[] = relatedProducts.map((p) => {
-    const rCount = p.reviews.length;
-    const avgRating = rCount > 0 ? p.reviews.reduce((s, r) => s + r.rating, 0) / rCount : 0;
+    const rCount = p.reviews?.length || 0;
+    const avgRating = rCount > 0 ? p.reviews.reduce((s: number, r: any) => s + r.rating, 0) / rCount : 0;
     return {
       id: p.id,
       name: p.name,
@@ -136,10 +150,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     };
   });
 
-  const reviewCount = product.reviews.length;
+  const reviewCount = product.reviews?.length || 0;
   const averageRating =
     reviewCount > 0
-      ? product.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+      ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
       : 0;
 
   // SEO JSON-LD
@@ -147,9 +161,9 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     name: product.name,
     description: product.description,
     sku: product.sku,
-    brand: product.brand.name,
+    brand: product.brand?.name || 'AURELIA',
     price: product.price,
-    images: product.images.map((i) => i.url),
+    images: (product.images || []).map((i: any) => i.url),
     inStock: (product.inventory?.stockQuantity ?? 0) > 0,
     ratingValue: reviewCount > 0 ? averageRating : undefined,
     reviewCount: reviewCount > 0 ? reviewCount : undefined,

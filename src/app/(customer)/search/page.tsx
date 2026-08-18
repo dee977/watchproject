@@ -16,31 +16,35 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   let products: any[] = [];
   if (query) {
-    products = await prisma.product.findMany({
-      where: {
-        isPublished: true,
-        OR: [
-          { name: { contains: query } },
-          { sku: { contains: query } },
-          { description: { contains: query } },
-          { movement: { contains: query } },
-          { caseMaterial: { contains: query } },
-          { brand: { name: { contains: query } } },
-          { category: { name: { contains: query } } },
-        ],
-      },
-      include: {
-        brand: { select: { name: true, slug: true } },
-        category: { select: { name: true, slug: true } },
-        images: { orderBy: { displayOrder: 'asc' } },
-        inventory: { select: { stockQuantity: true } },
-        reviews: { where: { isApproved: true }, select: { rating: true } },
-      },
-    });
+    try {
+      products = await prisma.product.findMany({
+        where: {
+          isPublished: true,
+          OR: [
+            { name: { contains: query } },
+            { sku: { contains: query } },
+            { description: { contains: query } },
+            { movement: { contains: query } },
+            { caseMaterial: { contains: query } },
+            { brand: { name: { contains: query } } },
+            { category: { name: { contains: query } } },
+          ],
+        },
+        include: {
+          brand: { select: { name: true, slug: true } },
+          category: { select: { name: true, slug: true } },
+          images: { orderBy: { displayOrder: 'asc' } },
+          inventory: { select: { stockQuantity: true } },
+          reviews: { where: { isApproved: true }, select: { rating: true } },
+        },
+      });
+    } catch (err) {
+      console.error('Search query error:', err);
+    }
   }
 
   const formatted: ProductCardData[] = products.map((p) => {
-    const reviewCount = p.reviews.length;
+    const reviewCount = p.reviews?.length || 0;
     const averageRating =
       reviewCount > 0
         ? p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviewCount
