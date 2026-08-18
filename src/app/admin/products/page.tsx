@@ -141,9 +141,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                               fill
                               sizes="48px"
                               className="object-cover"
-                              onError={(e) => {
-                                (e.target as any).src = FALLBACK_WATCH_IMAGE;
-                              }}
                             />
                           </div>
                           <div>
