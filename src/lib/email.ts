@@ -1,30 +1,189 @@
+import nodemailer from 'nodemailer';
+
 export interface EmailPayload {
   to: string;
   subject: string;
   html: string;
+  text?: string;
+  replyTo?: string;
 }
 
-export async function sendEmail({ to, subject, html }: EmailPayload): Promise<{ success: boolean; messageId?: string }> {
-  // Check if SMTP is configured
-  const host = process.env.EMAIL_SERVER_HOST;
-  const user = process.env.EMAIL_SERVER_USER;
-  const pass = process.env.EMAIL_SERVER_PASSWORD;
+export interface ContactInquiryPayload {
+  name: string;
+  email: string;
+  phone: string;
+  inquiryType: string;
+  message: string;
+  submittedAt?: string;
+}
 
-  if (host && user && pass && !host.includes('example.com')) {
-    // If real SMTP credentials are provided, we can use standard fetch / nodemailer
-    console.log(`[EMAIL DISPATCH - SMTP] To: ${to} | Subject: ${subject}`);
-    // In production node environment with credentials, dispatch via SMTP
-    return { success: true, messageId: `msg_${Date.now()}` };
+export type SmtpDiagnosticCode =
+  | 'SMTP_CONFIG_MISSING'
+  | 'SMTP_AUTH_FAILED'
+  | 'SMTP_CONNECTION_FAILED'
+  | 'SMTP_TLS_PORT_ERROR'
+  | 'SMTP_RECIPIENT_REJECTED'
+  | 'SMTP_DISPATCH_ERROR';
+
+export interface EmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  code?: SmtpDiagnosticCode;
+  detail?: string;
+}
+
+export function categorizeSmtpError(err: any): { code: SmtpDiagnosticCode; detail: string } {
+  const msg = (err?.message || '').toLowerCase();
+  const code = (err?.code || '').toUpperCase();
+  const responseCode = err?.responseCode || 0;
+
+  if (
+    code === 'EAUTH' ||
+    responseCode === 535 ||
+    msg.includes('username and password not accepted') ||
+    msg.includes('invalid login') ||
+    msg.includes('badcredentials')
+  ) {
+    return {
+      code: 'SMTP_AUTH_FAILED',
+      detail:
+        'Authentication failed. Please verify your EMAIL_SERVER_USER and EMAIL_SERVER_PASSWORD (for Gmail, use a 16-character Google App Password, not your standard password).',
+    };
   }
 
-  // Development / Logging mode
+  if (
+    code === 'ECONNREFUSED' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ENOTFOUND' ||
+    code === 'EHOSTUNREACH' ||
+    msg.includes('connect econnrefused') ||
+    msg.includes('timed out')
+  ) {
+    return {
+      code: 'SMTP_CONNECTION_FAILED',
+      detail:
+        'Could not connect to SMTP server. Please verify EMAIL_SERVER_HOST and check network/firewall connectivity.',
+    };
+  }
+
+  if (
+    msg.includes('wrong version number') ||
+    msg.includes('ssl routines') ||
+    msg.includes('tlsv1') ||
+    msg.includes('self signed') ||
+    msg.includes('certificate')
+  ) {
+    return {
+      code: 'SMTP_TLS_PORT_ERROR',
+      detail:
+        'TLS/SSL port mismatch or certificate issue. For port 465 set secure=true, for port 587 set secure=false (STARTTLS).',
+    };
+  }
+
+  if ((responseCode >= 550 && responseCode <= 553) || msg.includes('recipient address rejected')) {
+    return {
+      code: 'SMTP_RECIPIENT_REJECTED',
+      detail: 'The recipient address was rejected by the SMTP server.',
+    };
+  }
+
+  return {
+    code: 'SMTP_DISPATCH_ERROR',
+    detail: err?.message || 'Unknown SMTP dispatch failure.',
+  };
+}
+
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+  replyTo,
+}: EmailPayload): Promise<EmailResult> {
+  const host = process.env.EMAIL_SERVER_HOST?.trim();
+  const port = Number(process.env.EMAIL_SERVER_PORT) || 587;
+  const user = process.env.EMAIL_SERVER_USER?.trim();
+  const pass = process.env.EMAIL_SERVER_PASSWORD?.trim();
+  const from =
+    process.env.EMAIL_FROM?.trim() ||
+    (user ? `KSHAN Concierge <${user}>` : 'KSHAN Concierge <kshan92788@gmail.com>');
+
+  const isHostMissing = !host || host.includes('example.com');
+  const isUserMissing = !user || user.includes('example.com');
+  const isPassMissing = !pass || pass.includes('password_here');
+
+  // Server-side diagnostic logging (NEVER print the password)
   console.log(`\n======================================================`);
-  console.log(`[AURELIA LUXURY EMAIL NOTIFICATION]`);
-  console.log(`To: ${to}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Timestamp: ${new Date().toISOString()}`);
-  console.log(`======================================================\n`);
-  return { success: true, messageId: `local_msg_${Date.now()}` };
+  console.log(`[SMTP DIAGNOSTIC INSPECTION]`);
+  console.log(`EMAIL_SERVER_HOST:     ${host ? `"${host}"` : '[MISSING - REQUIRED]'}`);
+  console.log(`EMAIL_SERVER_PORT:     ${port} (Default: 587 for STARTTLS, 465 for SSL)`);
+  console.log(`EMAIL_SERVER_USER:     ${user ? `"${user}"` : '[MISSING - REQUIRED]'}`);
+  console.log(`EMAIL_SERVER_PASSWORD: ${!isPassMissing ? '[CONFIGURED]' : '[MISSING - REQUIRED]'}`);
+  console.log(`EMAIL_FROM:            "${from}"`);
+  console.log(`Recipient (To):        "${to}"`);
+  console.log(`Reply-To:              "${replyTo || '[NOT SET]'}"`);
+  console.log(`Subject:               "${subject}"`);
+  console.log(`======================================================`);
+
+  if (isHostMissing || isUserMissing || isPassMissing) {
+    const missingKeys: string[] = [];
+    if (isHostMissing) missingKeys.push('EMAIL_SERVER_HOST');
+    if (isUserMissing) missingKeys.push('EMAIL_SERVER_USER');
+    if (isPassMissing) missingKeys.push('EMAIL_SERVER_PASSWORD');
+
+    const detailMsg = `Missing required SMTP environment variables in .env: ${missingKeys.join(', ')}.`;
+    console.error(`[SMTP ERROR - CONFIG MISSING] ${detailMsg}`);
+    console.error(`👉 Configure your SMTP credentials in .env to enable real email sending.`);
+    console.log(`======================================================\n`);
+
+    return {
+      success: false,
+      code: 'SMTP_CONFIG_MISSING',
+      error: 'SMTP credentials are not configured in .env.',
+      detail: detailMsg,
+    };
+  }
+
+  try {
+    const isSecure = port === 465;
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: isSecure,
+      auth: {
+        user,
+        pass,
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+    });
+
+    const info = await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+      text: text || html.replace(/<[^>]*>?/gm, ''),
+      ...(replyTo ? { replyTo } : {}),
+    });
+
+    console.log(`[SMTP SUCCESS] Email delivered successfully! Message ID: ${info.messageId} | Recipient: ${to}`);
+    console.log(`======================================================\n`);
+    return { success: true, messageId: info.messageId };
+  } catch (err: any) {
+    const categorized = categorizeSmtpError(err);
+    console.error(`[SMTP FAILURE - ${categorized.code}] ${categorized.detail}`);
+    console.error(`Raw Error: ${err?.message || err}`);
+    console.log(`======================================================\n`);
+
+    return {
+      success: false,
+      code: categorized.code,
+      error: 'Failed to dispatch email through SMTP server.',
+      detail: categorized.detail,
+    };
+  }
 }
 
 // -------------------------------------------------------------
@@ -57,21 +216,74 @@ function emailBaseWrapper(title: string, content: string): string {
   <div style="padding: 40px 15px;">
     <div class="container">
       <div class="header">
-        <h1 class="brand-title">AURELIA</h1>
+        <h1 class="brand-title">KSHAN</h1>
         <div class="brand-subtitle">Haute Horlogerie • Geneve & Mumbai</div>
       </div>
       <div class="body-content">
         ${content}
       </div>
       <div class="footer">
-        <p style="margin: 0 0 10px 0;">AURELIA Flagship Boutique • The Horizon Tower, Bandra Kurla Complex, Mumbai</p>
-        <p style="margin: 0;">For dedicated VIP concierge assistance, email concierge@aureliawatches.com</p>
+        <p style="margin: 0 0 10px 0;">Maison KSHAN Atelier • Surat, Gujarat 395004, India</p>
+        <p style="margin: 0;">For dedicated VIP concierge assistance, email kshan92788@gmail.com</p>
       </div>
     </div>
   </div>
 </body>
 </html>
   `;
+}
+
+export function getContactInquiryEmailHtml(inquiry: ContactInquiryPayload): string {
+  const timestamp =
+    inquiry.submittedAt ||
+    new Date().toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      dateStyle: 'full',
+      timeStyle: 'medium',
+    });
+
+  const body = `
+    <h2 style="color: #ffffff; font-size: 20px; font-weight: 500; margin-top: 0;">New Customer Concierge Inquiry</h2>
+    <p style="color: #c5a880; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px;">
+      Maison KSHAN Client Services Telemetry
+    </p>
+
+    <div style="background-color: #161820; padding: 22px; border: 1px solid #27272a; border-radius: 4px; margin-bottom: 24px;">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; color: #a1a1aa; width: 140px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Name:</td>
+          <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 600;">${inquiry.name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #a1a1aa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Email:</td>
+          <td style="padding: 8px 0; color: #c5a880; font-size: 14px;"><a href="mailto:${inquiry.email}" style="color: #c5a880; text-decoration: none;">${inquiry.email}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #a1a1aa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Phone:</td>
+          <td style="padding: 8px 0; color: #ffffff; font-size: 14px;"><a href="tel:${inquiry.phone}" style="color: #ffffff; text-decoration: none;">${inquiry.phone}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #a1a1aa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Inquiry Type:</td>
+          <td style="padding: 8px 0; color: #ffffff; font-size: 14px; font-weight: 500;">${inquiry.inquiryType}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #a1a1aa; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Submission Time:</td>
+          <td style="padding: 8px 0; color: #71717a; font-size: 13px;">${timestamp}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="background-color: #0d0f14; padding: 20px; border-left: 3px solid #c5a880; margin: 20px 0;">
+      <div style="font-size: 12px; text-transform: uppercase; color: #a1a1aa; letter-spacing: 0.1em; margin-bottom: 8px;">Customer Message</div>
+      <p style="color: #e4e4e7; font-size: 14px; line-height: 1.7; white-space: pre-wrap; margin: 0;">${inquiry.message}</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="mailto:${inquiry.email}?subject=Re:%20${encodeURIComponent(inquiry.inquiryType)}%20-%20KSHAN%20Concierge" class="btn">Reply to Customer</a>
+    </div>
+  `;
+
+  return emailBaseWrapper('New Customer Inquiry - KSHAN', body);
 }
 
 export function getOrderConfirmationEmailHtml(order: {
@@ -96,7 +308,7 @@ export function getOrderConfirmationEmailHtml(order: {
   const body = `
     <h2 style="color: #ffffff; font-size: 20px; font-weight: 500; margin-top: 0;">Order Acquisition Confirmed</h2>
     <p>Dear ${order.customerName},</p>
-    <p>Thank you for entrusting your horological acquisition to AURELIA. Your order <span class="highlight">#${order.orderNumber}</span> has been successfully placed and is now undergoing vault verification and white-glove inspection.</p>
+    <p>Thank you for entrusting your horological acquisition to KSHAN. Your order <span class="highlight">#${order.orderNumber}</span> has been successfully placed and is now undergoing vault verification and white-glove inspection.</p>
     
     <table class="table">
       <thead>

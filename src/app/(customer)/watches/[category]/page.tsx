@@ -7,19 +7,20 @@ import { SortSelect } from '@/components/customer/shop/SortSelect';
 import { MobileFilterButton } from '@/components/customer/shop/MobileFilterButton';
 import { ProductCardData } from '@/components/customer/shop/ProductCard';
 import Link from 'next/link';
+import { normalizeParamArray, normalizeParamString } from '@/lib/utils';
 
 interface CategoryPageProps {
   params: { category: string };
   searchParams: {
-    brand?: string;
-    movement?: string;
-    gender?: string;
-    inStock?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    sort?: string;
-    page?: string;
-    view?: 'grid' | 'list';
+    brand?: string | string[];
+    movement?: string | string[];
+    gender?: string | string[];
+    inStock?: string | string[];
+    minPrice?: string | string[];
+    maxPrice?: string | string[];
+    sort?: string | string[];
+    page?: string | string[];
+    view?: 'grid' | 'list' | string | string[];
   };
 }
 
@@ -34,38 +35,44 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     notFound();
   }
 
-  const page = Math.max(1, Number(searchParams.page || 1));
+  const pageParam = normalizeParamString(searchParams?.page);
+  const page = Math.max(1, Number(pageParam || 1));
   const limit = 12;
-  const viewMode = searchParams.view || 'grid';
-  const sort = searchParams.sort || 'recommended';
+  const rawViewMode = normalizeParamString(searchParams?.view);
+  const viewMode: 'grid' | 'list' = rawViewMode === 'list' ? 'list' : 'grid';
+  const sort = normalizeParamString(searchParams?.sort) || 'recommended';
 
   const where: any = {
     isPublished: true,
     categoryId: category.id,
   };
 
-  if (searchParams.brand) {
-    const brandSlugs = searchParams.brand.split(',');
+  const brandSlugs = normalizeParamArray(searchParams?.brand);
+  if (brandSlugs.length > 0) {
     where.brand = { slug: { in: brandSlugs } };
   }
 
-  if (searchParams.movement) {
-    const movements = searchParams.movement.split(',');
+  const movements = normalizeParamArray(searchParams?.movement);
+  if (movements.length > 0) {
     where.movement = { in: movements };
   }
 
-  if (searchParams.gender) {
-    where.gender = searchParams.gender;
+  const gender = normalizeParamString(searchParams?.gender);
+  if (gender) {
+    where.gender = gender;
   }
 
-  if (searchParams.inStock === 'true') {
+  const inStock = normalizeParamString(searchParams?.inStock);
+  if (inStock === 'true') {
     where.inventory = { stockQuantity: { gt: 0 } };
   }
 
-  if (searchParams.minPrice || searchParams.maxPrice) {
+  const minPrice = normalizeParamString(searchParams?.minPrice);
+  const maxPrice = normalizeParamString(searchParams?.maxPrice);
+  if (minPrice || maxPrice) {
     where.price = {};
-    if (searchParams.minPrice) where.price.gte = Number(searchParams.minPrice);
-    if (searchParams.maxPrice) where.price.lte = Number(searchParams.maxPrice);
+    if (minPrice && !isNaN(Number(minPrice))) where.price.gte = Number(minPrice);
+    if (maxPrice && !isNaN(Number(maxPrice))) where.price.lte = Number(maxPrice);
   }
 
   let orderBy: any = { createdAt: 'desc' };

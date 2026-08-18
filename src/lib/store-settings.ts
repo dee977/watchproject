@@ -30,7 +30,7 @@ const DEFAULT_SETTINGS: StoreSettingsMap = {
   COD_FEE: 250,
   RETURN_WINDOW_DAYS: 14,
   CONCIERGE_EMAIL: 'concierge@aureliawatches.com',
-  CONCIERGE_PHONE: '+91 (0) 22 8900 4400',
+  CONCIERGE_PHONE: '+91 9687949373',
   STORE_ADDRESS: 'The Horizon Tower, Suite 44B, Bandra Kurla Complex, Mumbai, MH 400051',
   HERO_TITLE: 'TIME, REDEFINED.',
   HERO_SUBTITLE: 'Discover exceptional handcrafted horological masterpieces engineered for eternity.',

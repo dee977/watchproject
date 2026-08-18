@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { RotateCcw, Check } from 'lucide-react';
 import { formatPrice } from '@/lib/currency';
+import { normalizeParamArray } from '@/lib/utils';
 
 interface FilterOption {
   label: string;
@@ -31,9 +32,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const searchParams = useSearchParams();
 
   // Get active params
-  const selectedBrands = searchParams.getAll('brand');
+  const selectedBrands = normalizeParamArray(searchParams.getAll('brand'));
   const selectedCategory = searchParams.get('category') || '';
-  const selectedMovement = searchParams.getAll('movement');
+  const selectedMovement = normalizeParamArray(searchParams.getAll('movement'));
   const selectedGender = searchParams.get('gender') || '';
   const inStockOnly = searchParams.get('inStock') === 'true';
   const minPrice = Number(searchParams.get('minPrice') || 0);
@@ -43,13 +44,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     const params = new URLSearchParams(searchParams.toString());
 
     if (isMulti) {
-      const currentValues = params.getAll(key);
-      if (currentValues.includes(value)) {
-        params.delete(key);
-        currentValues.filter((v) => v !== value).forEach((v) => params.append(key, v));
-      } else {
-        params.append(key, value);
-      }
+      const currentValues = normalizeParamArray(params.getAll(key));
+      params.delete(key);
+      const nextValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+
+      nextValues.forEach((v) => params.append(key, v));
     } else {
       if (params.get(key) === value) {
         params.delete(key);

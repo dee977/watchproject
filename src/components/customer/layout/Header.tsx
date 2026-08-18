@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
             </Link>
             <span>•</span>
             <Link href="/contact" className="hover:text-gold-300 transition-colors">
-              VIP Concierge: +91 22 8900 4400
+              VIP Concierge: +91 9687949373
             </Link>
           </div>
         </div>
@@ -135,10 +135,10 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="text-center">
             <Link href="/" className="inline-block group">
               <span className="block font-cinzel text-2xl md:text-3xl font-bold tracking-luxury gold-gradient-text transition-all group-hover:tracking-widest duration-300">
-                AURELIA
+                KSHAN
               </span>
               <span className="block text-[9px] uppercase tracking-[0.35em] text-gray-400 font-sans -mt-1">
-                Haute Horlogerie
+              
               </span>
             </Link>
           </div>

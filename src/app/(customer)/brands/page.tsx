@@ -21,7 +21,7 @@ export default async function BrandsPage() {
     <div className="max-w-7xl mx-auto px-6 py-16 space-y-12">
       <div className="text-center max-w-2xl mx-auto space-y-3">
         <span className="text-xs uppercase tracking-luxury text-gold-400 font-cinzel font-semibold">
-          Authorized Heritage
+           Authorized Heritage
         </span>
         <h1 className="text-4xl font-cinzel font-bold text-white">
           Manufactures & Maisons

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { normalizeParamArray } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,9 +8,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
-    const brand = searchParams.get('brand');
+    const brandList = normalizeParamArray(searchParams.getAll('brand'));
     const collection = searchParams.get('collection');
-    const movement = searchParams.get('movement');
+    const movementList = normalizeParamArray(searchParams.getAll('movement'));
     const gender = searchParams.get('gender');
     const inStock = searchParams.get('inStock') === 'true';
     const featured = searchParams.get('featured') === 'true';
@@ -38,26 +39,16 @@ export async function GET(req: NextRequest) {
       where.category = { slug: category };
     }
 
-    if (brand) {
-      const brandList = brand.split(',');
-      if (brandList.length > 1) {
-        where.brand = { slug: { in: brandList } };
-      } else {
-        where.brand = { slug: brand };
-      }
+    if (brandList.length > 0) {
+      where.brand = { slug: { in: brandList } };
     }
 
     if (collection) {
       where.collection = { slug: collection };
     }
 
-    if (movement) {
-      const movementList = movement.split(',');
-      if (movementList.length > 1) {
-        where.movement = { in: movementList };
-      } else {
-        where.movement = movement;
-      }
+    if (movementList.length > 0) {
+      where.movement = { in: movementList };
     }
 
     if (gender) {

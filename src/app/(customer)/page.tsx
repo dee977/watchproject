@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { HeroSlider } from '@/components/customer/shop/HeroSlider';
 import { ProductGrid } from '@/components/customer/shop/ProductGrid';
 import { ProductCardData } from '@/components/customer/shop/ProductCard';
-import { ArrowRight, Sparkles, Shield, Clock, Award, Compass, ChevronRight } from 'lucide-react';
+import { ArrowRight, Sparkles, Award, Compass, ChevronRight } from 'lucide-react';
 
 export const revalidate = 60; // ISR revalidate every 60 seconds
 
@@ -207,63 +207,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. Editorial Maison Spotlight */}
-      <section className="max-w-7xl mx-auto px-6">
-        <div className="relative rounded-2xl overflow-hidden border border-gold-500/20 bg-obsidian-900">
-          <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-            <div className="lg:col-span-6 p-8 sm:p-12 lg:p-16 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-gold-500/10 border border-gold-500/30 text-gold-300 text-[10px] uppercase tracking-luxury font-semibold">
-                <span>The Art of Haute Horlogerie</span>
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-cinzel font-bold text-white leading-tight">
-                Where Handcrafted Heritage Meets Micro-Engineering
-              </h2>
-
-              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed font-light">
-                Every timepiece in the AURELIA vault undergoes an unyielding 18-point testing protocol for amplitude, beat error, water tightness, and cosmetic perfection. We believe that true horology is an heirloom passed between generations.
-              </p>
-
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-obsidian-800 text-center">
-                <div>
-                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-gold-300">100%</div>
-                  <div className="text-[10px] uppercase text-gray-400 mt-0.5">Authenticity Guaranteed</div>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-gold-300">METAS & COSC</div>
-                  <div className="text-[10px] uppercase text-gray-400 mt-0.5">Chronometer Certified</div>
-                </div>
-                <div>
-                  <div className="text-xl sm:text-2xl font-cinzel font-bold text-gold-300">24/7</div>
-                  <div className="text-[10px] uppercase text-gray-400 mt-0.5">Master Concierge</div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <Link
-                  href="/about"
-                  className="btn-gold px-7 py-3 rounded text-xs font-semibold uppercase tracking-luxury inline-flex items-center gap-2 group"
-                >
-                  <span>Our Story & Heritage</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </div>
-
-            <div className="lg:col-span-6 relative h-96 lg:h-[500px] w-full bg-obsidian-950">
-              <Image
-                src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1200&q=80"
-                alt="Watchmaker Workshop Inspection"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-obsidian-900/90 via-transparent to-transparent hidden lg:block" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. New Horological Arrivals */}
+      {/* 5. New Horological Arrivals */}
       <section className="max-w-7xl mx-auto px-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-obsidian-800 pb-4">
           <div>
@@ -288,7 +232,7 @@ export default async function HomePage() {
         <ProductGrid products={newArrivals.map(mapProductToCard)} columns={4} />
       </section>
 
-      {/* 7. Best Selling Timepieces */}
+      {/* 6. Best Selling Timepieces */}
       <section className="max-w-7xl mx-auto px-6 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-obsidian-800 pb-4">
           <div>

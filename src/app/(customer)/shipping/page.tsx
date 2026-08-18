@@ -48,18 +48,18 @@ export default function ShippingPolicyPage() {
             <span>3. Delivery Timelines & Fees</span>
           </h2>
           <ul className="list-disc pl-5 space-y-1.5 text-gray-400">
-            <li><strong>Standard Armored Delivery (3-4 business days):</strong> Complimentary on all orders over ₹50,000. For orders under ₹50,000, a subsidized fee of ₹750 applies.</li>
-            <li><strong>Priority Armed Transport (24-48 hours):</strong> Flat fee of ₹1,850 for priority aircraft allocation and dedicated courier delivery.</li>
+            <li><strong>Standard Armored Delivery (3-4 business days)</strong> </li>
+            <li><strong>Priority Armed Transport (24-48 hours)</strong> </li>
           </ul>
         </section>
 
         <section className="p-6 rounded-xl bg-obsidian-900/40 border border-obsidian-800 space-y-3">
           <h2 className="text-base font-cinzel font-bold text-white flex items-center gap-2">
             <MapPin className="w-5 h-5 text-gold-400" />
-            <span>4. Handover & Biometric OTP Verification</span>
+            <span>4. No Verification</span>
           </h2>
           <p>
-            Upon delivery, our armored courier will request valid government identification and a real-time one-time password (OTP) sent directly to your registered phone number. Handover will only proceed once identity is verified.
+            there are no verification.
           </p>
         </section>
       </div>

@@ -44,3 +44,32 @@ export function formatDateTime(date: string | Date | number): string {
     minute: '2-digit',
   }).format(d);
 }
+
+/**
+ * Safely normalizes searchParam values that could be string, string[], undefined, or comma-separated strings.
+ * Returns a deduplicated, trimmed array of non-empty strings.
+ */
+export function normalizeParamArray(param: string | string[] | undefined | null): string[] {
+  if (!param) return [];
+  const rawList = Array.isArray(param) ? param : [param];
+  return Array.from(
+    new Set(
+      rawList
+        .flatMap((item) => (typeof item === 'string' ? item.split(',') : []))
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0)
+    )
+  );
+}
+
+/**
+ * Safely normalizes searchParam values that should be a single string.
+ */
+export function normalizeParamString(param: string | string[] | undefined | null): string | undefined {
+  if (!param) return undefined;
+  if (Array.isArray(param)) {
+    const first = param[0];
+    return typeof first === 'string' && first.trim().length > 0 ? first.trim() : undefined;
+  }
+  return typeof param === 'string' && param.trim().length > 0 ? param.trim() : undefined;
+}

@@ -49,7 +49,7 @@ async function main() {
     { key: 'COD_FEE', value: '250', description: 'Cash on delivery handling fee in INR' },
     { key: 'RETURN_WINDOW_DAYS', value: '14', description: 'Eligible return window in days' },
     { key: 'CONCIERGE_EMAIL', value: 'concierge@aureliawatches.com', description: 'Customer concierge support email' },
-    { key: 'CONCIERGE_PHONE', value: '+91 (0) 22 8900 4400', description: 'VIP support hotline' },
+    { key: 'CONCIERGE_PHONE', value: '+91 9687949373', description: 'VIP support hotline' },
     { key: 'STORE_ADDRESS', value: 'The Horizon Tower, Suite 44B, Bandra Kurla Complex, Mumbai, MH 400051, India', description: 'Flagship boutique address' },
     { key: 'HERO_TITLE', value: 'TIME, REDEFINED.', description: 'Homepage hero headline' },
     { key: 'HERO_SUBTITLE', value: 'Discover exceptional handcrafted horological masterpieces engineered for eternity.', description: 'Homepage hero subheading' },

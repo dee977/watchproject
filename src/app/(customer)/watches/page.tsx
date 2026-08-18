@@ -6,74 +6,85 @@ import { SortSelect } from '@/components/customer/shop/SortSelect';
 import { MobileFilterButton } from '@/components/customer/shop/MobileFilterButton';
 import { ProductCardData } from '@/components/customer/shop/ProductCard';
 import Link from 'next/link';
+import { normalizeParamArray, normalizeParamString } from '@/lib/utils';
 
 interface WatchesPageProps {
   searchParams: {
-    brand?: string;
-    category?: string;
-    collection?: string;
-    movement?: string;
-    gender?: string;
-    inStock?: string;
-    featured?: string;
-    new?: string;
-    minPrice?: string;
-    maxPrice?: string;
-    sort?: string;
-    page?: string;
-    view?: 'grid' | 'list';
+    brand?: string | string[];
+    category?: string | string[];
+    collection?: string | string[];
+    movement?: string | string[];
+    gender?: string | string[];
+    inStock?: string | string[];
+    featured?: string | string[];
+    new?: string | string[];
+    minPrice?: string | string[];
+    maxPrice?: string | string[];
+    sort?: string | string[];
+    page?: string | string[];
+    view?: 'grid' | 'list' | string | string[];
   };
 }
 
 export const dynamic = 'force-dynamic';
 
 export default async function WatchesPage({ searchParams }: WatchesPageProps) {
-  const page = Math.max(1, Number(searchParams.page || 1));
+  const pageParam = normalizeParamString(searchParams?.page);
+  const page = Math.max(1, Number(pageParam || 1));
   const limit = 12;
-  const viewMode = searchParams.view || 'grid';
-  const sort = searchParams.sort || 'recommended';
+  const rawViewMode = normalizeParamString(searchParams?.view);
+  const viewMode: 'grid' | 'list' = rawViewMode === 'list' ? 'list' : 'grid';
+  const sort = normalizeParamString(searchParams?.sort) || 'recommended';
 
   // Build Prisma where filter
   const where: any = { isPublished: true };
 
-  if (searchParams.brand) {
-    const brandSlugs = searchParams.brand.split(',');
+  const brandSlugs = normalizeParamArray(searchParams?.brand);
+  if (brandSlugs.length > 0) {
     where.brand = { slug: { in: brandSlugs } };
   }
 
-  if (searchParams.category) {
-    where.category = { slug: searchParams.category };
+  const categorySlug = normalizeParamString(searchParams?.category);
+  if (categorySlug) {
+    where.category = { slug: categorySlug };
   }
 
-  if (searchParams.collection) {
-    where.collection = { slug: searchParams.collection };
+  const collectionSlug = normalizeParamString(searchParams?.collection);
+  if (collectionSlug) {
+    where.collection = { slug: collectionSlug };
   }
 
-  if (searchParams.movement) {
-    const movements = searchParams.movement.split(',');
+  const movements = normalizeParamArray(searchParams?.movement);
+  if (movements.length > 0) {
     where.movement = { in: movements };
   }
 
-  if (searchParams.gender) {
-    where.gender = searchParams.gender;
+  const gender = normalizeParamString(searchParams?.gender);
+  if (gender) {
+    where.gender = gender;
   }
 
-  if (searchParams.featured === 'true') {
+  const featured = normalizeParamString(searchParams?.featured);
+  if (featured === 'true') {
     where.isFeatured = true;
   }
 
-  if (searchParams.new === 'true') {
+  const isNew = normalizeParamString(searchParams?.new);
+  if (isNew === 'true') {
     where.isNewArrival = true;
   }
 
-  if (searchParams.inStock === 'true') {
+  const inStock = normalizeParamString(searchParams?.inStock);
+  if (inStock === 'true') {
     where.inventory = { stockQuantity: { gt: 0 } };
   }
 
-  if (searchParams.minPrice || searchParams.maxPrice) {
+  const minPrice = normalizeParamString(searchParams?.minPrice);
+  const maxPrice = normalizeParamString(searchParams?.maxPrice);
+  if (minPrice || maxPrice) {
     where.price = {};
-    if (searchParams.minPrice) where.price.gte = Number(searchParams.minPrice);
-    if (searchParams.maxPrice) where.price.lte = Number(searchParams.maxPrice);
+    if (minPrice && !isNaN(Number(minPrice))) where.price.gte = Number(minPrice);
+    if (maxPrice && !isNaN(Number(maxPrice))) where.price.lte = Number(maxPrice);
   }
 
   // Sorting
