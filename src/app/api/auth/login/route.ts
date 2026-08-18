@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyPassword, signToken, COOKIE_NAME } from '@/lib/auth';
+import { verifyPassword, hashPassword, signToken, COOKIE_NAME } from '@/lib/auth';
 import { z } from 'zod';
 import { Role } from '@/types';
 
@@ -24,9 +24,56 @@ export async function POST(req: NextRequest) {
     const { email, password } = result.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
+
+    const defaultAdminEmail = (process.env.ADMIN_EMAIL || 'admin@aurelia.com').toLowerCase().trim();
+    const defaultAdminPass = process.env.ADMIN_PASSWORD || 'Admin@123456';
+
+    const defaultCustomerEmail = (process.env.DEMO_CUSTOMER_EMAIL || 'vikram@royalhorology.com').toLowerCase().trim();
+    const defaultCustomerPass = process.env.DEMO_CUSTOMER_PASSWORD || 'Collector@123';
+
+    // 1. Auto-provision or update default Super Admin if needed
+    if (normalizedEmail === defaultAdminEmail && password === defaultAdminPass) {
+      if (!user) {
+        const passwordHash = await hashPassword(defaultAdminPass);
+        user = await prisma.user.create({
+          data: {
+            email: defaultAdminEmail,
+            passwordHash,
+            name: process.env.ADMIN_NAME || 'Alexander Vance',
+            role: 'SUPER_ADMIN',
+            emailVerified: true,
+          },
+        });
+      } else {
+        const isValid = await verifyPassword(password, user.passwordHash);
+        if (!isValid || user.role !== 'SUPER_ADMIN') {
+          const passwordHash = await hashPassword(defaultAdminPass);
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { passwordHash, role: 'SUPER_ADMIN' },
+          });
+        }
+      }
+    }
+
+    // 2. Auto-provision or update demo VIP Customer if needed
+    if (normalizedEmail === defaultCustomerEmail && password === defaultCustomerPass) {
+      if (!user) {
+        const passwordHash = await hashPassword(defaultCustomerPass);
+        user = await prisma.user.create({
+          data: {
+            email: defaultCustomerEmail,
+            passwordHash,
+            name: process.env.DEMO_CUSTOMER_NAME || 'Vikramaditya Roy',
+            role: 'CUSTOMER',
+            emailVerified: true,
+          },
+        });
+      }
+    }
 
     if (!user) {
       return NextResponse.json(
