@@ -117,7 +117,16 @@ export const InventoryManagerTable: React.FC<{ initialData: InventoryItem[] }> =
                       <div className="flex items-center gap-3">
                         {item.image && (
                           <div className="relative w-10 h-10 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
-                            <Image src={item.image} alt={item.productName} fill className="object-cover" />
+                            <Image
+                              src={item.image}
+                              alt={item.productName}
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                              onError={(e) => {
+                                (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                              }}
+                            />
                           </div>
                         )}
                         <div>

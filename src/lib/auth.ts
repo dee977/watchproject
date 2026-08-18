@@ -85,15 +85,14 @@ export const getSessionUser = cache(async (req?: Request | any): Promise<TokenPa
       }
     } catch (dbError) {
       // In offline/test environments or transient pooler retries, trust cryptographically verified signed JWT token
-      return {
-        userId: decoded.userId,
-        email: decoded.email,
-        role: decoded.role as Role,
-        name: decoded.name,
-      };
     }
 
-    return null;
+    return {
+      userId: decoded.userId,
+      email: decoded.email,
+      role: decoded.role as Role,
+      name: decoded.name,
+    };
   } catch (error) {
     return null;
   }

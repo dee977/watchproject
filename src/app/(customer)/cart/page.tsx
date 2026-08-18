@@ -147,10 +147,14 @@ export default function CartPage() {
                   <div className="flex items-center gap-4">
                     <div className="relative w-20 h-20 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
                       <Image
-                        src={item.image}
+                        src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'}
                         alt={item.name}
                         fill
+                        sizes="80px"
                         className="object-cover"
+                        onError={(e) => {
+                          (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                        }}
                       />
                     </div>
 

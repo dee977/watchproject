@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser, canManageProducts } from '@/lib/auth';
+import { getPublicImageUrl } from '@/lib/images';
 
 export async function GET(
   req: NextRequest,
@@ -110,7 +111,7 @@ export async function PUT(
       await prisma.productImage.createMany({
         data: images.map((url: string, idx: number) => ({
           productId: params.id,
-          url,
+          url: getPublicImageUrl(url),
           isPrimary: idx === 0,
           displayOrder: idx,
         })),

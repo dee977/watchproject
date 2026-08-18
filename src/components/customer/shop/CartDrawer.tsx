@@ -108,10 +108,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   {/* Thumbnail */}
                   <div className="relative w-20 h-20 bg-obsidian-950 rounded overflow-hidden flex-shrink-0 border border-obsidian-800">
                     <Image
-                      src={item.image}
+                      src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'}
                       alt={item.name}
                       fill
+                      sizes="80px"
                       className="object-cover"
+                      onError={(e) => {
+                        (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                      }}
                     />
                   </div>
 

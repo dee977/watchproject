@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ZoomIn } from 'lucide-react';
+import { getPublicImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface ProductGalleryProps {
   images: Array<{ url: string; altText?: string | null }>;
@@ -17,7 +18,13 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
 
-  const activeImage = images[selectedIndex]?.url || images[0]?.url || '';
+  const rawActive = images[selectedIndex]?.url || images[0]?.url || '';
+  const [activeImage, setActiveImage] = useState(() => getPublicImageUrl(rawActive));
+
+  useEffect(() => {
+    const raw = images[selectedIndex]?.url || images[0]?.url || '';
+    setActiveImage(getPublicImageUrl(raw));
+  }, [selectedIndex, images]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -44,6 +51,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
           className={`object-cover transition-opacity duration-300 ${
             isZoomed ? 'opacity-0' : 'opacity-100'
           }`}
+          onError={() => setActiveImage(FALLBACK_WATCH_IMAGE)}
         />
 
         {/* High Magnification Lens View */}
@@ -67,24 +75,31 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
       {/* Thumbnail Bar */}
       {images.length > 1 && (
         <div className="flex gap-3 overflow-x-auto pb-2">
-          {images.map((img, idx) => (
-            <button
-              key={idx}
-              onClick={() => setSelectedIndex(idx)}
-              className={`relative w-20 h-20 rounded-md overflow-hidden bg-obsidian-900 border transition-all flex-shrink-0 ${
-                selectedIndex === idx
-                  ? 'border-gold-400 ring-2 ring-gold-400/50 scale-105'
-                  : 'border-obsidian-800 opacity-60 hover:opacity-100'
-              }`}
-            >
-              <Image
-                src={img.url}
-                alt={`${productName} thumbnail ${idx + 1}`}
-                fill
-                className="object-cover"
-              />
-            </button>
-          ))}
+          {images.map((img, idx) => {
+            const thumbUrl = getPublicImageUrl(img.url);
+            return (
+              <button
+                key={idx}
+                onClick={() => setSelectedIndex(idx)}
+                className={`relative w-20 h-20 rounded-md overflow-hidden bg-obsidian-900 border transition-all flex-shrink-0 ${
+                  selectedIndex === idx
+                    ? 'border-gold-400 ring-2 ring-gold-400/50 scale-105'
+                    : 'border-obsidian-800 opacity-60 hover:opacity-100'
+                }`}
+              >
+                <Image
+                  src={thumbUrl}
+                  alt={`${productName} thumbnail ${idx + 1}`}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                  onError={(e) => {
+                    (e.target as any).src = FALLBACK_WATCH_IMAGE;
+                  }}
+                />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

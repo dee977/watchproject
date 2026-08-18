@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
+import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { formatPrice } from '@/lib/currency';
 import { useCartStore } from '@/lib/cart-store';
+import { FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface WishlistItem {
   id: string;
@@ -76,7 +77,16 @@ export const WishlistGrid: React.FC<{ initialItems: WishlistItem[] }> = ({ initi
         >
           <div className="space-y-3">
             <div className="relative aspect-square rounded-lg bg-obsidian-950 overflow-hidden border border-obsidian-800/80">
-              <Image src={item.image} alt={item.name} fill className="object-cover" />
+              <Image
+                src={item.image || FALLBACK_WATCH_IMAGE}
+                alt={item.name}
+                fill
+                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover"
+                onError={(e) => {
+                  (e.target as any).src = FALLBACK_WATCH_IMAGE;
+                }}
+              />
               <button
                 onClick={() => handleRemove(item.productId)}
                 className="absolute top-2.5 right-2.5 p-2 rounded-full bg-obsidian-950/80 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors"

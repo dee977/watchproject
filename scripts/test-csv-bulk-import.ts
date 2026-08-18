@@ -59,6 +59,7 @@ AUR-04,"Omega Speedmaster","Omega","Luxury Watches",-5000,60000,1,"Manual","Stee
 
   const res1 = await POST(req1 as any);
   const data1 = await res1.json();
+  console.log('DEBUG test 1 status:', res1.status, 'data1:', data1);
 
   assert(data1.totalRows === 4, 'Dry run accurately counts 4 data rows');
   assert(data1.validCount === 0, '0 rows valid when prices contain blank/currency/commas/negatives');
@@ -114,6 +115,9 @@ KSH-TIS-015,"Tissot PR516 Chronograph","Tissot","Chronograph Watches",72000,7900
 
   const res2 = await POST(req2 as any);
   const data2 = await res2.json();
+  if (data2.totalRows !== 15) {
+    console.log('DEBUG test 2 status:', res2.status, 'data2:', data2);
+  }
 
   assert(data2.totalRows === 15, '15-row CSV total rows counted accurately');
   assert(data2.validCount === 15, 'All 15 rows validated as 100% valid (0 errors)');

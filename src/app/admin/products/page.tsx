@@ -118,7 +118,16 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       <div className="flex items-center gap-3">
                         {p.images[0]?.url && (
                           <div className="relative w-12 h-12 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
-                            <Image src={p.images[0].url} alt={p.name} fill className="object-cover" />
+                            <Image
+                              src={p.images[0].url}
+                              alt={p.name}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                              onError={(e) => {
+                                (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                              }}
+                            />
                           </div>
                         )}
                         <div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser, canManageProducts } from '@/lib/auth';
 import { slugify, generateSKU } from '@/lib/utils';
+import { getPublicImageUrl } from '@/lib/images';
 import { z } from 'zod';
 
 const ProductInputSchema = z.object({
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
         },
         images: {
           create: data.images.map((url, idx) => ({
-            url,
+            url: getPublicImageUrl(url),
             isPrimary: idx === 0,
             displayOrder: idx,
             altText: `${data.name} View ${idx + 1}`,

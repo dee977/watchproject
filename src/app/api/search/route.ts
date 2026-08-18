@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getPublicImageUrl } from '@/lib/images';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
           images: {
             take: 1,
             orderBy: { displayOrder: 'asc' },
-            select: { url: true },
+            select: { url: true, isPrimary: true },
           },
         },
       }),
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
       sku: p.sku,
       price: p.price,
       brand: p.brand.name,
-      image: p.images[0]?.url || '',
+      image: getPublicImageUrl(p.images[0]?.url),
     }));
 
     return NextResponse.json({

@@ -391,7 +391,16 @@ export default function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <Image
+                        src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'}
+                        alt={item.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                        onError={(e) => {
+                          (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                        }}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium truncate">{item.name}</p>

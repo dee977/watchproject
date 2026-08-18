@@ -8,6 +8,12 @@ import { formatPrice } from '@/lib/currency';
 import { WishlistButton } from './WishlistButton';
 import { useCartStore } from '@/lib/cart-store';
 import { QuickViewModal, QuickViewProduct } from './QuickViewModal';
+import {
+  getProductPrimaryImage,
+  getProductSecondaryImage,
+  FALLBACK_WATCH_IMAGE,
+  FALLBACK_SECONDARY_WATCH_IMAGE,
+} from '@/lib/images';
 
 export interface ProductCardData {
   id: string;
@@ -28,7 +34,7 @@ export interface ProductCardData {
   isNewArrival?: boolean;
   isBestSeller?: boolean;
   stockQuantity: number;
-  images: Array<{ url: string; altText?: string | null; isPrimary?: boolean }>;
+  images: Array<{ url: string; altText?: string | null; isPrimary?: boolean; displayOrder?: number }>;
   averageRating?: number;
   reviewCount?: number;
 }
@@ -46,14 +52,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
-  const addItem = useCartStore((state) => state.addItem);
+  const initialPrimary = getProductPrimaryImage(product.images);
+  const initialSecondary = getProductSecondaryImage(product.images);
 
-  const primaryImage = product.images[0]?.url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
-  const secondaryImage = product.images[1]?.url || primaryImage;
+  const [primaryImageSrc, setPrimaryImageSrc] = useState(initialPrimary);
+  const [secondaryImageSrc, setSecondaryImageSrc] = useState(initialSecondary);
+
+  const addItem = useCartStore((state) => state.addItem);
 
   const isOutOfStock = product.stockQuantity <= 0;
   const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= 3;
-  const discount = product.discountPercent || (product.mrp > product.price ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0);
+  const discount =
+    product.discountPercent ||
+    (product.mrp > product.price
+      ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+      : 0);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,7 +82,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       brand: product.brand.name,
       price: product.price,
       mrp: product.mrp,
-      image: primaryImage,
+      image: primaryImageSrc,
       maxStock: product.stockQuantity,
     });
 
@@ -103,10 +116,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <div className="relative w-full md:w-56 aspect-square rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
             <Link href={`/product/${product.slug}`} className="block h-full w-full">
               <Image
-                src={primaryImage}
+                src={primaryImageSrc}
                 alt={product.name}
                 fill
+                sizes="(max-width: 768px) 100vw, 224px"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
+                onError={() => setPrimaryImageSrc(FALLBACK_WATCH_IMAGE)}
               />
             </Link>
 
@@ -119,7 +134,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   brand: product.brand.name,
                   price: product.price,
                   mrp: product.mrp,
-                  image: primaryImage,
+                  image: primaryImageSrc,
                 }}
               />
             </div>
@@ -257,7 +272,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               brand: product.brand.name,
               price: product.price,
               mrp: product.mrp,
-              image: primaryImage,
+              image: primaryImageSrc,
             }}
           />
         </div>
@@ -266,11 +281,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="relative aspect-square w-full bg-obsidian-950 overflow-hidden">
           <Link href={`/product/${product.slug}`} className="block w-full h-full">
             <Image
-              src={isHovered && secondaryImage ? secondaryImage : primaryImage}
+              src={isHovered && secondaryImageSrc ? secondaryImageSrc : primaryImageSrc}
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover group-hover:scale-105 transition-all duration-700 ease-out"
+              onError={() => {
+                if (isHovered && secondaryImageSrc) {
+                  setSecondaryImageSrc(FALLBACK_SECONDARY_WATCH_IMAGE);
+                } else {
+                  setPrimaryImageSrc(FALLBACK_WATCH_IMAGE);
+                }
+              }}
             />
           </Link>
 

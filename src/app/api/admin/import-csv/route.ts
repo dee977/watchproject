@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser, canManageProducts } from '@/lib/auth';
 import { slugify, generateSKU } from '@/lib/utils';
+import { getPublicImageUrl } from '@/lib/images';
 
 // Helper to determine country of origin for horological brands
 function getOriginCountry(brandName: string): string {
@@ -118,24 +119,28 @@ function parseAndValidatePrice(val: string | undefined | null, fieldName: 'Price
   return { value: Math.round(num) };
 }
 
-// Validate HTTPS Image URL
+// Validate HTTPS Image URL or Supabase storage image key
 function validateImageUrl(urlStr: string | undefined | null): { isValid: boolean; error?: string } {
   if (!urlStr || urlStr.trim() === '') {
     return { isValid: true }; // Optional if empty
   }
   const trimmed = urlStr.trim();
-  if (!trimmed.startsWith('https://')) {
-    return { isValid: false, error: 'Invalid ImageUrl (must be a valid HTTPS URL e.g. https://example.com/watch.jpg)' };
+  if (trimmed.startsWith('http://')) {
+    return { isValid: false, error: 'Invalid ImageUrl (must use HTTPS protocol e.g. https://...)' };
   }
-  try {
-    const parsed = new URL(trimmed);
-    if (parsed.protocol !== 'https:') {
-      return { isValid: false, error: 'Invalid ImageUrl (must use HTTPS protocol)' };
+  if (trimmed.startsWith('https://')) {
+    try {
+      new URL(trimmed);
+      return { isValid: true };
+    } catch (e) {
+      return { isValid: false, error: 'Invalid ImageUrl format' };
     }
-    return { isValid: true };
-  } catch (e) {
-    return { isValid: false, error: 'Invalid ImageUrl format' };
   }
+  // Allow direct Supabase storage filenames with image extensions
+  if (/\.(jpg|jpeg|png|webp|avif|gif|svg)$/i.test(trimmed) && /^[a-zA-Z0-9_\-\.\/]+$/.test(trimmed)) {
+    return { isValid: true };
+  }
+  return { isValid: false, error: 'Invalid ImageUrl (must be a valid HTTPS URL e.g. https://...)' };
 }
 
 // Safe idempotent Brand lookup and auto-creation
@@ -587,16 +592,17 @@ export async function POST(req: NextRequest) {
 
           // Sync image
           if (item.data.imageUrl) {
+            const finalImageUrl = getPublicImageUrl(item.data.imageUrl);
             if (existingProduct.images.length > 0) {
               await prisma.productImage.update({
                 where: { id: existingProduct.images[0].id },
-                data: { url: item.data.imageUrl },
+                data: { url: finalImageUrl },
               });
             } else {
               await prisma.productImage.create({
                 data: {
                   productId: existingProduct.id,
-                  url: item.data.imageUrl,
+                  url: finalImageUrl,
                   isPrimary: true,
                   displayOrder: 0,
                 },
@@ -613,6 +619,8 @@ export async function POST(req: NextRequest) {
           while (await prisma.product.findUnique({ where: { slug } })) {
             slug = `${baseSlug}-${slugSuffix++}`;
           }
+
+          const finalImageUrl = item.data.imageUrl ? getPublicImageUrl(item.data.imageUrl) : null;
 
           await prisma.product.create({
             data: {
@@ -637,11 +645,11 @@ export async function POST(req: NextRequest) {
                   lowStockThreshold: 2,
                 },
               },
-              ...(item.data.imageUrl
+              ...(finalImageUrl
                 ? {
                     images: {
                       create: {
-                        url: item.data.imageUrl,
+                        url: finalImageUrl,
                         isPrimary: true,
                         displayOrder: 0,
                       },
