@@ -1,6 +1,5 @@
 import { signToken } from '../src/lib/auth';
 
-// Function unit test & integration verification
 async function runCsvBulkImportTestSuite() {
   console.log('====================================================');
   console.log('   KSHAN Admin CSV Bulk Product Ingestion Test Suite ');
@@ -20,7 +19,7 @@ async function runCsvBulkImportTestSuite() {
     }
   }
 
-  // 1. Role Tokens
+  // 1. Generate Auth Tokens
   const adminToken = signToken({
     userId: 'usr_admin_test_101',
     email: 'admin@aurelia.com',
@@ -35,8 +34,10 @@ async function runCsvBulkImportTestSuite() {
     name: 'Vikramaditya Roy',
   });
 
+  const { POST, GET } = await import('../src/app/api/admin/import-csv/route');
+
   // -----------------------------------------------------------
-  // Test 1: Price & MRP Validation (Reject Currency Symbols & Blank)
+  // Test 1: Price & MRP Format Validation (Reject Currency Symbols & Blank)
   // -----------------------------------------------------------
   console.log('\n--- 1. Testing Price & MRP Format Validation ---');
 
@@ -46,8 +47,6 @@ AUR-02,"Rolex Submariner","Rolex","Luxury Watches",₹49999,59999,3,"Automatic",
 AUR-03,"Breitling Navitimer","Breitling","Chronograph Watches","49,999","₹59,999",2,"Automatic","Steel","43 mm","30m","Aviation watch","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
 AUR-04,"Omega Speedmaster","Omega","Luxury Watches",-5000,60000,1,"Manual","Steel","42 mm","50m","Moonwatch","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
 `;
-
-  const { POST } = await import('../src/app/api/admin/import-csv/route');
 
   const req1 = new Request('http://localhost:3000/api/admin/import-csv', {
     method: 'POST',
@@ -82,21 +81,26 @@ AUR-04,"Omega Speedmaster","Omega","Luxury Watches",-5000,60000,1,"Manual","Stee
   );
 
   // -----------------------------------------------------------
-  // Test 2: Auto Brand & Category Discovery Notices in Dry Run
+  // Test 2: Full 15-Row Catalog Dry Run Preview (10 Brands, 4 Categories)
   // -----------------------------------------------------------
-  console.log('\n--- 2. Testing Brand & Category Auto-Creation Telemetry ---');
+  console.log('\n--- 2. Testing 15-Row Catalog Validation with 10 Brands & 4 Categories ---');
 
-  const multiBrandCsv = `SKU,Name,Brand,Category,Price,MRP,Stock,Movement,CaseMaterial,CaseDiameter,WaterResistance,Description,ImageUrl
-AUR-TAG-01,"TAG Heuer Carrera","TAG Heuer","Chronograph Watches",450000,500000,5,"Automatic","Steel","42 mm","100m","Racing chronometer","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-GSS-01,"Guess Horizon Chrono","Guess","Sport Watches",25000,28000,8,"Quartz","Steel","44 mm","50m","Fashion sport watch","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-BRT-01,"Breitling Navitimer B01","Breitling","Chronograph Watches",620000,650000,3,"Automatic","Steel","43 mm","30m","Aviation chronometer","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-OMG-01,"Omega Seamaster 300M","Omega","Luxury Watches",540000,580000,4,"Automatic","Steel","42 mm","300m","Master Chronometer Diver","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-RLX-01,"Rolex Submariner Date","Rolex","Luxury Watches",850000,900000,2,"Automatic","Oystersteel","41 mm","300m","Iconic Diver","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-CAS-01,"Casio G-Shock MR-G","Casio","Sport Watches",180000,200000,6,"Solar Quartz","Titanium","49 mm","200m","Indestructible Flagship","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-AX-01,"Armani Exchange Outerbanks","Armani Exchange","Chronograph Watches",18000,22000,10,"Quartz","Silicone","44 mm","50m","Urban sports chronograph","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-HB-01,"Hugo Boss Grand Prix","Hugo Boss","Automatic Watches",38000,42000,5,"Automatic","Steel","44 mm","50m","Executive timepiece","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-VER-01,"Versace Hellenyium","Versace","Chronograph Watches",85000,95000,4,"Quartz","Gold IP Steel","42 mm","50m","Italian luxury chronograph","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
-AUR-TIS-01,"Tissot PRX Powermatic 80","Tissot","Automatic Watches",68000,75000,7,"Automatic","316L Steel","40 mm","100m","Integrated bracelet classic","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+  const full15RowsCsv = `SKU,Name,Brand,Category,Price,MRP,Stock,Movement,CaseMaterial,CaseDiameter,WaterResistance,Description,ImageUrl
+KSH-TAG-001,"TAG Heuer Carrera Chrono","TAG Heuer","Chronograph Watches",450000,480000,4,"Automatic","Fine-Brushed Steel","42 mm","100m","Iconic motorsport chronograph with Calibre HEUER02.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-GSS-002,"Guess Continental Chronograph","Guess","Chronograph Watches",22000,25000,8,"Quartz","Stainless Steel","44 mm","50m","Fashion sport luxury chronograph timepiece.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-BRT-003,"Breitling Navitimer B01 43","Breitling","Chronograph Watches",650000,680000,3,"Automatic","Stainless Steel","43 mm","30m","Aviation chronometer with circular slide rule.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-OMG-004,"Omega Seamaster Aqua Terra","Omega","Luxury Watches",520000,560000,5,"Automatic","Oystersteel","41 mm","150m","Master Chronometer tribute to maritime heritage.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-RLX-005,"Rolex Datejust 41","Rolex","Luxury Watches",880000,920000,2,"Automatic","Rolesor","41 mm","100m","Classic benchmark of horological elegance.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-CAS-006,"Casio Edifice Sapphire Chrono","Casio","Sport Watches",18000,21000,10,"Solar Quartz","Stainless Steel","43 mm","100m","High-performance solar powered sports chronometer.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-RLX-007,"Rolex Submariner No Date","Rolex","Luxury Watches",820000,860000,3,"Automatic","Oystersteel","41 mm","300m","The quintessential divers archetype chronometer.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-RLX-008,"Rolex GMT-Master II Pepsi","Rolex","Luxury Watches",1250000,1300000,1,"Automatic","Oystersteel","40 mm","100m","Dual timezone aviation chronometer with Cerachrom bezel.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-RLX-009,"Rolex Cosmograph Daytona","Rolex","Luxury Watches",1650000,1750000,1,"Automatic","Oystersteel","40 mm","100m","Ultimate motor racing sports chronograph.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-RLX-010,"Rolex Oyster Perpetual 36","Rolex","Luxury Watches",580000,620000,4,"Automatic","Oystersteel","36 mm","100m","Purest expression of the Oyster concept.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-AX-011,"Armani Exchange Hampton Chrono","Armani Exchange","Chronograph Watches",16000,19000,6,"Quartz","Stainless Steel","46 mm","50m","Modern minimalist chronograph with gunmetal finish.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-AX-012,"Armani Exchange Outerbanks Diver","Armani Exchange","Chronograph Watches",18500,22000,7,"Quartz","Silicone Strap","44 mm","50m","Dynamic casual sportswear chronograph.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-HB-013,"Hugo Boss Grand Prix Automatic","Hugo Boss","Automatic Watches",36000,40000,5,"Automatic","Stainless Steel","44 mm","50m","Refined executive automatic timepiece.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-VER-014,"Versace Hellenyium Chrono Gold","Versace","Chronograph Watches",88000,98000,3,"Quartz","Gold Plated Steel","42 mm","50m","Haute Italian luxury watch with Medusa relief.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
+KSH-TIS-015,"Tissot PR516 Chronograph","Tissot","Chronograph Watches",72000,79000,6,"Manual Wind","Stainless Steel","41 mm","100m","Vintage motorsport inspired mechanical chronograph.","https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80"
 `;
 
   const req2 = new Request('http://localhost:3000/api/admin/import-csv', {
@@ -105,22 +109,22 @@ AUR-TIS-01,"Tissot PRX Powermatic 80","Tissot","Automatic Watches",68000,75000,7
       'Content-Type': 'application/json',
       cookie: `aurelia_auth_token=${adminToken}`,
     },
-    body: JSON.stringify({ csvData: multiBrandCsv, dryRun: true }),
+    body: JSON.stringify({ csvData: full15RowsCsv, dryRun: true }),
   });
 
   const res2 = await POST(req2 as any);
   const data2 = await res2.json();
 
-  assert(data2.totalRows === 10, '10 catalog rows parsed successfully');
-  assert(data2.validCount === 10, 'All 10 rows are 100% valid with valid Price & MRP');
-  assert(data2.invalidCount === 0, '0 invalid rows (missing brands/categories are no longer treated as errors)');
-  assert(Array.isArray(data2.newBrands), 'newBrands list returned in telemetry');
-  assert(Array.isArray(data2.newCategories), 'newCategories list returned in telemetry');
+  assert(data2.totalRows === 15, '15-row CSV total rows counted accurately');
+  assert(data2.validCount === 15, 'All 15 rows validated as 100% valid (0 errors)');
+  assert(data2.invalidCount === 0, 'Invalid rows is 0');
+  assert(Array.isArray(data2.newBrands), 'newBrands telemetry array returned');
+  assert(Array.isArray(data2.newCategories), 'newCategories telemetry array returned');
 
   // -----------------------------------------------------------
-  // Test 3: Customer Authorization Rejection (Security Test)
+  // Test 3: Customer Authorization Block (HTTP 403)
   // -----------------------------------------------------------
-  console.log('\n--- 3. Testing Customer Unauthorized Access Rejection ---');
+  console.log('\n--- 3. Testing Security Protection ---');
 
   const reqCustomer = new Request('http://localhost:3000/api/admin/import-csv', {
     method: 'POST',
@@ -128,21 +132,20 @@ AUR-TIS-01,"Tissot PRX Powermatic 80","Tissot","Automatic Watches",68000,75000,7
       'Content-Type': 'application/json',
       cookie: `aurelia_auth_token=${customerToken}`,
     },
-    body: JSON.stringify({ csvData: multiBrandCsv, dryRun: true }),
+    body: JSON.stringify({ csvData: full15RowsCsv, dryRun: true }),
   });
 
   const resCustomer = await POST(reqCustomer as any);
   assert(resCustomer.status === 403, 'Customer role is strictly denied access with HTTP 403 Forbidden');
 
-  // Unauthenticated user test
   const reqUnauth = new Request('http://localhost:3000/api/admin/import-csv', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ csvData: multiBrandCsv, dryRun: true }),
+    body: JSON.stringify({ csvData: full15RowsCsv, dryRun: true }),
   });
 
   const resUnauth = await POST(reqUnauth as any);
-  assert(resUnauth.status === 403, 'Unauthenticated user is strictly denied access with HTTP 403 Forbidden');
+  assert(resUnauth.status === 403, 'Unauthenticated visitor is strictly denied access with HTTP 403 Forbidden');
 
   // -----------------------------------------------------------
   // Test 4: ImageUrl Validation
@@ -169,7 +172,7 @@ AUR-BAD-02,"Watch Name 2","Rolex","Luxury Watches",50000,60000,1,"Automatic","St
   assert(dataImg.invalidCount === 2, 'Non-HTTPS and malformed ImageUrls correctly rejected');
   assert(
     dataImg.rows[0].errors.some((e: string) => e.includes('Invalid ImageUrl')),
-    'HTTP URL rejected in favor of HTTPS'
+    'Insecure HTTP URL rejected in favor of HTTPS'
   );
 
   console.log('\n====================================================');

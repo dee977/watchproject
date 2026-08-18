@@ -121,7 +121,7 @@ function parseAndValidatePrice(val: string | undefined | null, fieldName: 'Price
 // Validate HTTPS Image URL
 function validateImageUrl(urlStr: string | undefined | null): { isValid: boolean; error?: string } {
   if (!urlStr || urlStr.trim() === '') {
-    return { isValid: true }; // Optional if empty, will use fallback or skip image
+    return { isValid: true }; // Optional if empty
   }
   const trimmed = urlStr.trim();
   if (!trimmed.startsWith('https://')) {
@@ -136,6 +136,78 @@ function validateImageUrl(urlStr: string | undefined | null): { isValid: boolean
   } catch (e) {
     return { isValid: false, error: 'Invalid ImageUrl format' };
   }
+}
+
+// Safe idempotent Brand lookup and auto-creation
+async function resolveBrand(brandName: string): Promise<{ id: string; name: string; slug: string; isNew: boolean }> {
+  const trimmed = brandName.trim();
+
+  // 1. Case-insensitive lookup
+  const existing = await prisma.brand.findFirst({
+    where: { name: { equals: trimmed, mode: 'insensitive' } },
+  });
+
+  if (existing) {
+    return { id: existing.id, name: existing.name, slug: existing.slug, isNew: false };
+  }
+
+  // 2. Generate unique slug
+  let baseSlug = slugify(trimmed) || 'brand';
+  let slug = baseSlug;
+  let counter = 1;
+  while (await prisma.brand.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter++}`;
+  }
+
+  // 3. Upsert
+  const created = await prisma.brand.upsert({
+    where: { name: trimmed },
+    update: {},
+    create: {
+      name: trimmed,
+      slug,
+      originCountry: getOriginCountry(trimmed),
+      isFeatured: false,
+    },
+  });
+
+  return { id: created.id, name: created.name, slug: created.slug, isNew: true };
+}
+
+// Safe idempotent Category lookup and auto-creation
+async function resolveCategory(categoryName: string): Promise<{ id: string; name: string; slug: string; isNew: boolean }> {
+  const trimmed = categoryName.trim();
+
+  // 1. Case-insensitive lookup
+  const existing = await prisma.category.findFirst({
+    where: { name: { equals: trimmed, mode: 'insensitive' } },
+  });
+
+  if (existing) {
+    return { id: existing.id, name: existing.name, slug: existing.slug, isNew: false };
+  }
+
+  // 2. Generate unique slug
+  let baseSlug = slugify(trimmed) || 'category';
+  let slug = baseSlug;
+  let counter = 1;
+  while (await prisma.category.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter++}`;
+  }
+
+  // 3. Upsert
+  const created = await prisma.category.upsert({
+    where: { name: trimmed },
+    update: {},
+    create: {
+      name: trimmed,
+      slug,
+      description: `Curated collection of ${trimmed}.`,
+      isFeatured: false,
+    },
+  });
+
+  return { id: created.id, name: created.name, slug: created.slug, isNew: true };
 }
 
 export async function GET(req: NextRequest) {
@@ -413,7 +485,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ==========================================
-    // EXECUTE INGESTION & SAVE (DATABASE TRANSACTION)
+    // EXECUTE INGESTION & SAVE
     // ==========================================
     if (validRows.length === 0) {
       return NextResponse.json(
@@ -430,149 +502,202 @@ export async function POST(req: NextRequest) {
 
     const createdBrandNames: string[] = [];
     const createdCategoryNames: string[] = [];
-    let importedCount = 0;
+    const resolvedBrandMap = new Map<string, { id: string; name: string }>();
+    const resolvedCategoryMap = new Map<string, { id: string; name: string }>();
 
-    await prisma.$transaction(async (tx) => {
-      // 1. Resolve or Create Brands
-      for (const brandName of Array.from(pendingNewBrands)) {
-        const brandKey = brandName.toLowerCase();
-        if (!brandMap.has(brandKey)) {
-          let baseSlug = slugify(brandName) || 'brand';
-          let slug = baseSlug;
-          let suffix = 1;
-          while (await tx.brand.findUnique({ where: { slug } })) {
-            slug = `${baseSlug}-${suffix++}`;
-          }
-
-          const newBrand = await tx.brand.create({
-            data: {
-              name: brandName,
-              slug,
-              originCountry: getOriginCountry(brandName),
-              isFeatured: false,
-            },
-          });
-          brandMap.set(brandKey, newBrand);
-          createdBrandNames.push(brandName);
-        }
+    // Step 1: Pre-resolve/create all required Brands idempotently
+    const uniqueBrandNames = Array.from(new Set(validRows.map((r) => r.data.brandName.trim())));
+    for (const bName of uniqueBrandNames) {
+      const bKey = bName.toLowerCase();
+      const resolved = await resolveBrand(bName);
+      resolvedBrandMap.set(bKey, resolved);
+      if (resolved.isNew && !createdBrandNames.includes(resolved.name)) {
+        createdBrandNames.push(resolved.name);
       }
+    }
 
-      // 2. Resolve or Create Categories
-      for (const categoryName of Array.from(pendingNewCategories)) {
-        const categoryKey = categoryName.toLowerCase();
-        if (!categoryMap.has(categoryKey)) {
-          let baseSlug = slugify(categoryName) || 'category';
-          let slug = baseSlug;
-          let suffix = 1;
-          while (await tx.category.findUnique({ where: { slug } })) {
-            slug = `${baseSlug}-${suffix++}`;
-          }
-
-          const newCat = await tx.category.create({
-            data: {
-              name: categoryName,
-              slug,
-              description: `Curated collection of ${categoryName}.`,
-              isFeatured: false,
-            },
-          });
-          categoryMap.set(categoryKey, newCat);
-          createdCategoryNames.push(categoryName);
-        }
+    // Step 2: Pre-resolve/create all required Categories idempotently
+    const uniqueCategoryNames = Array.from(new Set(validRows.map((r) => r.data.categoryName.trim())));
+    for (const cName of uniqueCategoryNames) {
+      const cKey = cName.toLowerCase();
+      const resolved = await resolveCategory(cName);
+      resolvedCategoryMap.set(cKey, resolved);
+      if (resolved.isNew && !createdCategoryNames.includes(resolved.name)) {
+        createdCategoryNames.push(resolved.name);
       }
+    }
 
-      // 3. Insert Products with Inventory and Images
-      for (const item of validRows) {
-        const brand = brandMap.get(item.data.brandName.toLowerCase())!;
-        const category = categoryMap.get(item.data.categoryName.toLowerCase())!;
+    // Step 3: Insert / Upsert all valid products
+    let createdCount = 0;
+    let updatedCount = 0;
+    const failedRows: Array<{ rowNumber: number; sku: string; error: string }> = [];
 
-        // Unique slug generation
-        let baseSlug = slugify(item.data.name) || 'timepiece';
-        let slug = baseSlug;
-        let slugSuffix = 1;
-        while (await tx.product.findUnique({ where: { slug } })) {
-          slug = `${baseSlug}-${slugSuffix++}`;
-        }
-
-        // Unique SKU generation
-        let sku = item.data.sku;
-        let skuSuffix = 1;
-        while (await tx.product.findUnique({ where: { sku } })) {
-          sku = `${item.data.sku}-${skuSuffix++}`;
-        }
+    for (const item of validRows) {
+      try {
+        const brand = resolvedBrandMap.get(item.data.brandName.trim().toLowerCase())!;
+        const category = resolvedCategoryMap.get(item.data.categoryName.trim().toLowerCase())!;
 
         const discountPercent =
           item.data.mrp > item.data.price
             ? Math.round(((item.data.mrp - item.data.price) / item.data.mrp) * 100)
             : 0;
 
-        await tx.product.create({
-          data: {
-            name: item.data.name,
-            slug,
-            sku,
-            brandId: brand.id,
-            categoryId: category.id,
-            price: item.data.price,
-            mrp: item.data.mrp,
-            discountPercent,
-            movement: item.data.movement,
-            caseMaterial: item.data.caseMaterial,
-            caseDiameter: item.data.caseDiameter,
-            waterResistance: item.data.waterResistance,
-            description: item.data.description,
-            shortDescription: item.data.description.substring(0, 180),
-            isPublished: true,
-            inventory: {
-              create: {
+        // Check if a product with this SKU already exists
+        const existingProduct = await prisma.product.findUnique({
+          where: { sku: item.data.sku },
+          include: { inventory: true, images: true },
+        });
+
+        if (existingProduct) {
+          // Update existing product to prevent duplicate collisions
+          await prisma.product.update({
+            where: { id: existingProduct.id },
+            data: {
+              name: item.data.name,
+              brandId: brand.id,
+              categoryId: category.id,
+              price: item.data.price,
+              mrp: item.data.mrp,
+              discountPercent,
+              movement: item.data.movement,
+              caseMaterial: item.data.caseMaterial,
+              caseDiameter: item.data.caseDiameter,
+              waterResistance: item.data.waterResistance,
+              description: item.data.description,
+              shortDescription: item.data.description.substring(0, 180),
+              isPublished: true,
+            },
+          });
+
+          // Sync inventory
+          if (existingProduct.inventory) {
+            await prisma.inventory.update({
+              where: { productId: existingProduct.id },
+              data: { stockQuantity: item.data.stock },
+            });
+          } else {
+            await prisma.inventory.create({
+              data: {
+                productId: existingProduct.id,
                 stockQuantity: item.data.stock,
                 lowStockThreshold: 2,
               },
-            },
-            ...(item.data.imageUrl
-              ? {
-                  images: {
-                    create: {
-                      url: item.data.imageUrl,
-                      isPrimary: true,
-                      displayOrder: 0,
+            });
+          }
+
+          // Sync image
+          if (item.data.imageUrl) {
+            if (existingProduct.images.length > 0) {
+              await prisma.productImage.update({
+                where: { id: existingProduct.images[0].id },
+                data: { url: item.data.imageUrl },
+              });
+            } else {
+              await prisma.productImage.create({
+                data: {
+                  productId: existingProduct.id,
+                  url: item.data.imageUrl,
+                  isPrimary: true,
+                  displayOrder: 0,
+                },
+              });
+            }
+          }
+
+          updatedCount++;
+        } else {
+          // New product creation: ensure unique slug
+          let baseSlug = slugify(item.data.name) || 'timepiece';
+          let slug = baseSlug;
+          let slugSuffix = 1;
+          while (await prisma.product.findUnique({ where: { slug } })) {
+            slug = `${baseSlug}-${slugSuffix++}`;
+          }
+
+          await prisma.product.create({
+            data: {
+              name: item.data.name,
+              slug,
+              sku: item.data.sku,
+              brandId: brand.id,
+              categoryId: category.id,
+              price: item.data.price,
+              mrp: item.data.mrp,
+              discountPercent,
+              movement: item.data.movement,
+              caseMaterial: item.data.caseMaterial,
+              caseDiameter: item.data.caseDiameter,
+              waterResistance: item.data.waterResistance,
+              description: item.data.description,
+              shortDescription: item.data.description.substring(0, 180),
+              isPublished: true,
+              inventory: {
+                create: {
+                  stockQuantity: item.data.stock,
+                  lowStockThreshold: 2,
+                },
+              },
+              ...(item.data.imageUrl
+                ? {
+                    images: {
+                      create: {
+                        url: item.data.imageUrl,
+                        isPrimary: true,
+                        displayOrder: 0,
+                      },
                     },
-                  },
-                }
-              : {}),
-          },
+                  }
+                : {}),
+            },
+          });
+
+          createdCount++;
+        }
+      } catch (rowErr: any) {
+        console.error(`Error importing row ${item.rowNumber} (${item.data.sku}):`, rowErr);
+        failedRows.push({
+          rowNumber: item.rowNumber,
+          sku: item.data.sku,
+          error: rowErr?.message || 'Database write error',
         });
-
-        importedCount++;
       }
+    }
 
-      // 4. Admin Audit Log Entry
-      await tx.adminActivityLog.create({
+    const totalProcessed = createdCount + updatedCount;
+
+    // Step 4: Record Audit Log
+    try {
+      await prisma.adminActivityLog.create({
         data: {
           userId: session.userId,
           action: 'BULK_CSV_IMPORT',
           entityType: 'PRODUCT',
-          details: `Imported ${importedCount} products, created ${createdBrandNames.length} brands (${createdBrandNames.join(', ')}), created ${createdCategoryNames.length} categories (${createdCategoryNames.join(', ')})`,
+          details: `Imported ${totalProcessed} products (${createdCount} created, ${updatedCount} updated), created ${createdBrandNames.length} brands (${createdBrandNames.join(', ')}), created ${createdCategoryNames.length} categories (${createdCategoryNames.join(', ')})`,
         },
       });
-    });
+    } catch (logErr) {
+      console.warn('AdminActivityLog failed to record:', logErr);
+    }
 
     return NextResponse.json({
       success: true,
-      message: `Successfully imported ${importedCount} timepieces.`,
-      importedCount,
-      skippedCount: invalidRows.length,
+      message: `Successfully processed ${totalProcessed} timepieces (${createdCount} new created, ${updatedCount} updated).`,
+      importedCount: totalProcessed,
+      createdCount,
+      updatedCount,
+      skippedCount: invalidRows.length + failedRows.length,
       createdBrands: createdBrandNames,
       createdCategories: createdCategoryNames,
+      failedRows,
       invalidRows: invalidRows.map((r) => ({
         rowNumber: r.rowNumber,
         errors: r.errors,
       })),
     });
   } catch (error: any) {
-    console.error('CSV ingestion transaction error:', error);
+    console.error('CSV ingestion error:', error);
     return NextResponse.json(
-      { error: 'Failed to process CSV import transaction: ' + (error?.message || 'Unknown database error') },
+      { error: 'Failed to process CSV import: ' + (error?.message || 'Unknown database error') },
       { status: 500 }
     );
   }

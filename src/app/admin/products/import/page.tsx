@@ -199,19 +199,35 @@ export default function BulkImportPage() {
           )}
 
           {successMessage && (
-            <div className="p-5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs space-y-2">
-              <div className="flex items-center gap-2 font-semibold">
+            <div className="p-5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs space-y-2.5 animate-fadeIn">
+              <div className="flex items-center gap-2 font-semibold text-sm">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
                 <span>{successMessage}</span>
               </div>
+              {executionResult && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+                  <div className="p-2 rounded bg-obsidian-950/80 border border-emerald-800/40 text-emerald-300">
+                    <span className="text-[10px] text-gray-400 block">Total Imported</span>
+                    <strong>{executionResult.importedCount ?? 0}</strong>
+                  </div>
+                  <div className="p-2 rounded bg-obsidian-950/80 border border-emerald-800/40 text-emerald-300">
+                    <span className="text-[10px] text-gray-400 block">New Products</span>
+                    <strong>{executionResult.createdCount ?? executionResult.importedCount ?? 0}</strong>
+                  </div>
+                  <div className="p-2 rounded bg-obsidian-950/80 border border-emerald-800/40 text-emerald-300">
+                    <span className="text-[10px] text-gray-400 block">Updated Products</span>
+                    <strong>{executionResult.updatedCount ?? 0}</strong>
+                  </div>
+                </div>
+              )}
               {executionResult?.createdBrands?.length > 0 && (
                 <p className="text-[11px] text-gray-300">
-                  <strong>New Brands Created:</strong> {executionResult.createdBrands.join(', ')}
+                  <strong className="text-gold-400">New Brands Created:</strong> {executionResult.createdBrands.join(', ')}
                 </p>
               )}
               {executionResult?.createdCategories?.length > 0 && (
                 <p className="text-[11px] text-gray-300">
-                  <strong>New Categories Created:</strong> {executionResult.createdCategories.join(', ')}
+                  <strong className="text-blue-400">New Categories Created:</strong> {executionResult.createdCategories.join(', ')}
                 </p>
               )}
               <p className="text-[10px] text-gray-400">Redirecting to Admin Product Catalog...</p>
