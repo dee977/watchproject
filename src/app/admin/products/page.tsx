@@ -3,17 +3,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
+import { getProductPrimaryImage, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 import { Plus, Download, Upload, Search, Edit2, Trash2 } from 'lucide-react';
 import { AdminProductRowActions } from '@/components/admin/AdminProductRowActions';
 
 interface AdminProductsPageProps {
-  searchParams: { q?: string; brand?: string };
+  searchParams?: { q?: string; brand?: string };
 }
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
-  const query = searchParams.q?.trim() || '';
+  const query = searchParams?.q?.trim() || '';
 
   const where: any = {};
   if (query) {
@@ -36,7 +37,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           brand: true,
           category: true,
           inventory: true,
-          images: { orderBy: { displayOrder: 'asc' }, take: 1 },
+          images: { orderBy: { displayOrder: 'asc' } },
         },
       }),
       prisma.product.count({ where }),
@@ -118,86 +119,93 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               </tr>
             </thead>
             <tbody className="divide-y divide-obsidian-800/80">
-              {products.map((p) => {
-                const stock = p.inventory?.stockQuantity ?? 0;
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-gray-500">
+                    No timepiece references found in the catalog.
+                  </td>
+                </tr>
+              ) : (
+                products.map((p) => {
+                  const stock = p.inventory?.stockQuantity ?? 0;
+                  const imageUrl = getProductPrimaryImage(p.images);
 
-                return (
-                  <tr key={p.id} className="hover:bg-obsidian-900/80 transition-colors text-gray-300">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        {p.images[0]?.url && (
+                  return (
+                    <tr key={p.id} className="hover:bg-obsidian-900/80 transition-colors text-gray-300">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
                             <Image
-                              src={p.images[0].url}
-                              alt={p.name}
+                              src={imageUrl}
+                              alt={p.name || 'Timepiece'}
                               fill
                               sizes="48px"
                               className="object-cover"
                               onError={(e) => {
-                                (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                                (e.target as any).src = FALLBACK_WATCH_IMAGE;
                               }}
                             />
                           </div>
-                        )}
-                        <div>
-                          <Link
-                            href={`/admin/products/${p.id}`}
-                            className="font-semibold text-white hover:text-gold-300 transition-colors"
-                          >
-                            {p.name}
-                          </Link>
-                          <div className="text-[10px] text-gray-500 uppercase tracking-wider">
-                            {p.brand?.name || 'Maison'} • {p.category?.name || 'Reference'}
+                          <div>
+                            <Link
+                              href={`/admin/products/${p.id}`}
+                              className="font-semibold text-white hover:text-gold-300 transition-colors"
+                            >
+                              {p.name || 'Untitled Timepiece'}
+                            </Link>
+                            <div className="text-[10px] text-gray-500 uppercase tracking-wider">
+                              {p.brand?.name || 'Maison'} • {p.category?.name || 'Reference'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="p-4 font-mono text-gray-400">{p.sku}</td>
+                      <td className="p-4 font-mono text-gray-400">{p.sku || 'N/A'}</td>
 
-                    <td className="p-4">
-                      <div className="font-semibold text-gold-300">{formatPrice(p.price)}</div>
-                      {p.mrp > p.price && (
-                        <div className="text-[10px] text-gray-500 line-through">
-                          {formatPrice(p.mrp)}
-                        </div>
-                      )}
-                    </td>
+                      <td className="p-4">
+                        <div className="font-semibold text-gold-300">{formatPrice(p.price)}</div>
+                        {Number(p.mrp) > Number(p.price) && (
+                          <div className="text-[10px] text-gray-500 line-through">
+                            {formatPrice(p.mrp)}
+                          </div>
+                        )}
+                      </td>
 
-                    <td className="p-4 text-gray-300">{p.movement}</td>
+                      <td className="p-4 text-gray-300">{p.movement || 'Automatic'}</td>
 
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          stock <= 0
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
-                            : stock <= 3
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                        }`}
-                      >
-                        {stock} in Vault
-                      </span>
-                    </td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            stock <= 0
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                              : stock <= 3
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                          }`}
+                        >
+                          {stock} in Vault
+                        </span>
+                      </td>
 
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          p.isPublished
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                            : 'bg-gray-800 text-gray-400'
-                        }`}
-                      >
-                        {p.isPublished ? 'Published' : 'Draft'}
-                      </span>
-                    </td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            p.isPublished
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-gray-800 text-gray-400'
+                          }`}
+                        >
+                          {p.isPublished ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
 
-                    <td className="p-4 text-right">
-                      <AdminProductRowActions productId={p.id} productName={p.name} />
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="p-4 text-right">
+                        <AdminProductRowActions productId={p.id} productName={p.name || 'Timepiece'} />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -7,14 +7,14 @@ import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import { Search, Eye, Filter, Truck } from 'lucide-react';
 
 interface AdminOrdersPageProps {
-  searchParams: { status?: string; q?: string };
+  searchParams?: { status?: string; q?: string };
 }
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
-  const statusFilter = searchParams.status || 'ALL';
-  const query = searchParams.q?.trim() || '';
+  const statusFilter = searchParams?.status || 'ALL';
+  const query = searchParams?.q?.trim() || '';
 
   const where: any = {};
   if (statusFilter !== 'ALL') {
