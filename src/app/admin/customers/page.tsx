@@ -2,30 +2,34 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
-import { Users, Mail, Phone, Calendar, Package } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminCustomersPage() {
-  const customers = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      orders: {
-        select: { totalAmount: true },
-      },
-      addresses: {
-        take: 1,
-        select: { city: true, state: true },
-      },
-      _count: {
-        select: {
-          orders: true,
-          reviews: true,
-          wishlist: true,
+  let customers: any[] = [];
+  try {
+    customers = await prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        orders: {
+          select: { totalAmount: true },
+        },
+        addresses: {
+          take: 1,
+          select: { city: true, state: true },
+        },
+        _count: {
+          select: {
+            orders: true,
+            reviews: true,
+            wishlist: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('[AdminCustomersPage] Customers query error:', error);
+  }
 
   return (
     <div className="space-y-6">
@@ -53,19 +57,20 @@ export default async function AdminCustomersPage() {
             </thead>
             <tbody className="divide-y divide-obsidian-800/80">
               {customers.map((c) => {
-                const lifetimeSpend = c.orders.reduce((sum, o) => sum + o.totalAmount, 0);
-                const cityState = c.addresses[0] ? `${c.addresses[0].city}, ${c.addresses[0].state}` : 'India';
+                const lifetimeSpend = (c.orders || []).reduce((sum: number, o: any) => sum + (Number(o?.totalAmount) || 0), 0);
+                const cityState = c.addresses?.[0] ? `${c.addresses[0].city}, ${c.addresses[0].state}` : 'India';
+                const initial = c.name ? c.name.charAt(0).toUpperCase() : 'U';
 
                 return (
                   <tr key={c.id} className="hover:bg-obsidian-900/80 transition-colors text-gray-300">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center font-bold text-gold-300 font-cinzel">
-                          {c.name.charAt(0)}
+                          {initial}
                         </div>
                         <div>
-                          <strong className="text-white block">{c.name}</strong>
-                          <span className="text-[10px] text-gray-500">{c.email}</span>
+                          <strong className="text-white block">{c.name || 'VIP Collector'}</strong>
+                          <span className="text-[10px] text-gray-500">{c.email || ''}</span>
                         </div>
                       </div>
                     </td>
@@ -78,14 +83,14 @@ export default async function AdminCustomersPage() {
                             : 'bg-obsidian-950 text-gray-400 border border-obsidian-800'
                         }`}
                       >
-                        {c.role}
+                        {c.role || 'CUSTOMER'}
                       </span>
                     </td>
 
                     <td className="p-4 text-gray-400">{cityState}</td>
 
                     <td className="p-4 text-center font-mono font-bold text-white">
-                      {c._count.orders}
+                      {c._count?.orders ?? 0}
                     </td>
 
                     <td className="p-4 text-right font-cinzel font-bold text-gold-300">

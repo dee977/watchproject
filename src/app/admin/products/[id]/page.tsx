@@ -10,19 +10,32 @@ interface EditProductPageProps {
 export const dynamic = 'force-dynamic';
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
-  const [product, brands, categories, collections] = await Promise.all([
-    prisma.product.findUnique({
-      where: { id: params.id },
-      include: {
-        inventory: true,
-        images: { orderBy: { displayOrder: 'asc' } },
-        specifications: { orderBy: { displayOrder: 'asc' } },
-      },
-    }),
-    prisma.brand.findMany({ orderBy: { name: 'asc' } }),
-    prisma.category.findMany({ orderBy: { name: 'asc' } }),
-    prisma.collection.findMany({ orderBy: { name: 'asc' } }),
-  ]);
+  let product: any = null;
+  let brands: any[] = [];
+  let categories: any[] = [];
+  let collections: any[] = [];
+
+  try {
+    const [prodRes, brandsRes, catsRes, colsRes] = await Promise.all([
+      prisma.product.findUnique({
+        where: { id: params.id },
+        include: {
+          inventory: true,
+          images: { orderBy: { displayOrder: 'asc' } },
+          specifications: { orderBy: { displayOrder: 'asc' } },
+        },
+      }),
+      prisma.brand.findMany({ orderBy: { name: 'asc' } }),
+      prisma.category.findMany({ orderBy: { name: 'asc' } }),
+      prisma.collection.findMany({ orderBy: { name: 'asc' } }),
+    ]);
+    product = prodRes;
+    brands = brandsRes || [];
+    categories = catsRes || [];
+    collections = colsRes || [];
+  } catch (error) {
+    console.error('[EditProductPage] Product lookup error:', error);
+  }
 
   if (!product) {
     notFound();

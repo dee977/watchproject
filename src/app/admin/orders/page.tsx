@@ -30,18 +30,27 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     ];
   }
 
-  const [orders, totalCount] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        user: { select: { name: true, email: true } },
-        items: true,
-        shipments: true,
-      },
-    }),
-    prisma.order.count({ where }),
-  ]);
+  let orders: any[] = [];
+  let totalCount = 0;
+
+  try {
+    const [ordersRes, countRes] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true, email: true } },
+          items: true,
+          shipments: true,
+        },
+      }),
+      prisma.order.count({ where }),
+    ]);
+    orders = ordersRes || [];
+    totalCount = countRes || 0;
+  } catch (error) {
+    console.error('[AdminOrdersPage] Order list query error:', error);
+  }
 
   const statuses = ['ALL', 'PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
@@ -122,7 +131,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                         {order.orderNumber}
                       </Link>
                       <span className="text-[10px] text-gray-500">
-                        {order.items.length} {order.items.length === 1 ? 'Timepiece' : 'Timepieces'}
+                        {order.items?.length || 0} {order.items?.length === 1 ? 'Timepiece' : 'Timepieces'}
                       </span>
                     </td>
 

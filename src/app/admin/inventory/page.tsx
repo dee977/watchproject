@@ -6,29 +6,34 @@ import { InventoryManagerTable } from '@/components/admin/InventoryManagerTable'
 export const dynamic = 'force-dynamic';
 
 export default async function AdminInventoryPage() {
-  const inventory = await prisma.inventory.findMany({
-    include: {
-      product: {
-        include: {
-          brand: true,
-          images: { take: 1, orderBy: { displayOrder: 'asc' } },
+  let inventory: any[] = [];
+  try {
+    inventory = await prisma.inventory.findMany({
+      include: {
+        product: {
+          include: {
+            brand: true,
+            images: { take: 1, orderBy: { displayOrder: 'asc' } },
+          },
         },
       },
-    },
-    orderBy: { stockQuantity: 'asc' },
-  });
+      orderBy: { stockQuantity: 'asc' },
+    });
+  } catch (error) {
+    console.error('[AdminInventoryPage] Inventory query error:', error);
+  }
 
-  const formatted = inventory.map((inv) => ({
+  const formatted = (inventory || []).map((inv) => ({
     id: inv.id,
     productId: inv.productId,
-    productName: inv.product.name,
-    sku: inv.product.sku,
-    brand: inv.product.brand.name,
-    price: inv.product.price,
-    stockQuantity: inv.stockQuantity,
-    reservedQuantity: inv.reservedQuantity,
-    lowStockThreshold: inv.lowStockThreshold,
-    image: inv.product.images[0]?.url || '',
+    productName: inv.product?.name || 'Timepiece Reference',
+    sku: inv.product?.sku || 'N/A',
+    brand: inv.product?.brand?.name || 'Maison',
+    price: Number(inv.product?.price) || 0,
+    stockQuantity: inv.stockQuantity ?? 0,
+    reservedQuantity: inv.reservedQuantity ?? 0,
+    lowStockThreshold: inv.lowStockThreshold ?? 2,
+    image: inv.product?.images?.[0]?.url || '',
   }));
 
   return (

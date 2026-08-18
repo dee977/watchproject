@@ -5,11 +5,22 @@ import { ProductForm } from '@/components/admin/ProductForm';
 export const dynamic = 'force-dynamic';
 
 export default async function NewProductPage() {
-  const [brands, categories, collections] = await Promise.all([
-    prisma.brand.findMany({ orderBy: { name: 'asc' } }),
-    prisma.category.findMany({ orderBy: { name: 'asc' } }),
-    prisma.collection.findMany({ orderBy: { name: 'asc' } }),
-  ]);
+  let brands: any[] = [];
+  let categories: any[] = [];
+  let collections: any[] = [];
+
+  try {
+    const [brandsRes, catsRes, colsRes] = await Promise.all([
+      prisma.brand.findMany({ orderBy: { name: 'asc' } }),
+      prisma.category.findMany({ orderBy: { name: 'asc' } }),
+      prisma.collection.findMany({ orderBy: { name: 'asc' } }),
+    ]);
+    brands = brandsRes || [];
+    categories = catsRes || [];
+    collections = colsRes || [];
+  } catch (error) {
+    console.error('[NewProductPage] Lookup options error:', error);
+  }
 
   return (
     <div className="space-y-6">

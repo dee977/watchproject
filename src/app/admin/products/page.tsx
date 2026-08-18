@@ -24,19 +24,28 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
     ];
   }
 
-  const [products, totalCount] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        brand: true,
-        category: true,
-        inventory: true,
-        images: { orderBy: { displayOrder: 'asc' }, take: 1 },
-      },
-    }),
-    prisma.product.count({ where }),
-  ]);
+  let products: any[] = [];
+  let totalCount = 0;
+
+  try {
+    const [prodsRes, countRes] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          brand: true,
+          category: true,
+          inventory: true,
+          images: { orderBy: { displayOrder: 'asc' }, take: 1 },
+        },
+      }),
+      prisma.product.count({ where }),
+    ]);
+    products = prodsRes || [];
+    totalCount = countRes || 0;
+  } catch (error) {
+    console.error('[AdminProductsPage] Product list query error:', error);
+  }
 
   return (
     <div className="space-y-6">
@@ -138,7 +147,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             {p.name}
                           </Link>
                           <div className="text-[10px] text-gray-500 uppercase tracking-wider">
-                            {p.brand.name} • {p.category.name}
+                            {p.brand?.name || 'Maison'} • {p.category?.name || 'Reference'}
                           </div>
                         </div>
                       </div>

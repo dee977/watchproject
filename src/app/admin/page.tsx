@@ -19,71 +19,89 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
-  const [
-    orders,
-    productsCount,
-    customersCount,
-    lowStockInventory,
-    recentOrders,
-    categoryProducts,
-  ] = await Promise.all([
-    // All Orders for KPI calculation
-    prisma.order.findMany({
-      select: {
-        totalAmount: true,
-        status: true,
-        paymentStatus: true,
-        createdAt: true,
-      },
-    }),
+  let orders: any[] = [];
+  let productsCount = 0;
+  let customersCount = 0;
+  let lowStockInventory: any[] = [];
+  let recentOrders: any[] = [];
+  let categoryProducts: any[] = [];
 
-    // Total Products
-    prisma.product.count({ where: { isPublished: true } }),
+  try {
+    const [
+      ordersRes,
+      prodCountRes,
+      custCountRes,
+      lowStockRes,
+      recentOrdersRes,
+      catProdRes,
+    ] = await Promise.all([
+      // Orders for financial KPI calculation
+      prisma.order.findMany({
+        select: {
+          totalAmount: true,
+          status: true,
+          paymentStatus: true,
+          createdAt: true,
+        },
+      }),
 
-    // Total Customers
-    prisma.user.count({ where: { role: 'CUSTOMER' } }),
+      // Total Products
+      prisma.product.count({ where: { isPublished: true } }),
 
-    // Low stock items
-    prisma.inventory.findMany({
-      where: {
-        stockQuantity: { lte: 3 },
-      },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            sku: true,
-            price: true,
-            brand: { select: { name: true } },
+      // Total Customers
+      prisma.user.count({ where: { role: 'CUSTOMER' } }),
+
+      // Low stock items
+      prisma.inventory.findMany({
+        where: {
+          stockQuantity: { lte: 3 },
+        },
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              price: true,
+              brand: { select: { name: true } },
+            },
           },
         },
-      },
-      take: 5,
-    }),
+        take: 5,
+      }),
 
-    // Recent 5 orders
-    prisma.order.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        items: true,
-        user: { select: { name: true, email: true } },
-        shipments: true,
-      },
-    }),
+      // Recent 5 orders
+      prisma.order.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          items: true,
+          user: { select: { name: true, email: true } },
+          shipments: true,
+        },
+      }),
 
-    // Category distribution
-    prisma.category.findMany({
-      select: {
-        name: true,
-        _count: { select: { products: true } },
-      },
-    }),
-  ]);
+      // Category distribution
+      prisma.category.findMany({
+        select: {
+          name: true,
+          _count: { select: { products: true } },
+        },
+      }),
+    ]);
+
+    orders = ordersRes || [];
+    productsCount = prodCountRes || 0;
+    customersCount = custCountRes || 0;
+    lowStockInventory = lowStockRes || [];
+    recentOrders = recentOrdersRes || [];
+    categoryProducts = catProdRes || [];
+  } catch (error) {
+    console.error('[AdminDashboardPage] Database telemetry query failed:', error);
+  }
 
   // Financial aggregates
-  const totalGrossRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const totalGrossRevenue = orders.reduce((sum: number, o: any) => sum + (Number(o?.totalAmount) || 0), 0);
   const totalOrdersCount = orders.length;
   const averageOrderValue = totalOrdersCount > 0 ? Math.round(totalGrossRevenue / totalOrdersCount) : 0;
   const lowStockCount = lowStockInventory.length;
@@ -98,9 +116,10 @@ export default async function AdminDashboardPage() {
   }
 
   orders.forEach((o) => {
+    if (!o?.createdAt) return;
     const key = new Date(o.createdAt).toLocaleDateString('en-US', { weekday: 'short' });
     if (daysMap[key]) {
-      daysMap[key].revenue += o.totalAmount;
+      daysMap[key].revenue += Number(o.totalAmount) || 0;
       daysMap[key].orders += 1;
     }
   });
@@ -112,8 +131,8 @@ export default async function AdminDashboardPage() {
   }));
 
   const categoryShare = categoryProducts.map((c) => ({
-    category: c.name,
-    count: c._count.products,
+    category: c.name || 'General',
+    count: c._count?.products ?? 0,
   }));
 
   return (
@@ -173,35 +192,44 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="divide-y divide-obsidian-800">
-            {recentOrders.map((order) => (
-              <div key={order.id} className="py-3.5 flex items-center justify-between gap-4 text-xs">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/admin/orders/${order.id}`}
-                      className="font-mono font-bold text-gold-300 hover:underline"
-                    >
-                      {order.orderNumber}
-                    </Link>
-                    <OrderStatusBadge status={order.status} type="order" />
-                  </div>
-                  <p className="text-gray-400">
-                    Client: <strong className="text-white">{order.user?.name || order.guestName}</strong> • {order.items.length} items
-                  </p>
-                </div>
+          {recentOrders.length === 0 ? (
+            <p className="text-xs text-gray-500 py-4">No recent orders recorded in the vault.</p>
+          ) : (
+            <div className="divide-y divide-obsidian-800">
+              {recentOrders.map((order) => {
+                const clientName = order.user?.name || order.guestName || 'VIP Client';
+                const itemCount = order.items?.length || 0;
 
-                <div className="text-right space-y-1">
-                  <span className="font-cinzel font-bold text-white block">
-                    {formatPrice(order.totalAmount)}
-                  </span>
-                  <span className="text-[10px] text-gray-500 font-mono">
-                    {formatDate(order.createdAt)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+                return (
+                  <div key={order.id} className="py-3.5 flex items-center justify-between gap-4 text-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/orders/${order.id}`}
+                          className="font-mono font-bold text-gold-300 hover:underline"
+                        >
+                          {order.orderNumber}
+                        </Link>
+                        <OrderStatusBadge status={order.status} type="order" />
+                      </div>
+                      <p className="text-gray-400">
+                        Client: <strong className="text-white">{clientName}</strong> • {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                      </p>
+                    </div>
+
+                    <div className="text-right space-y-1">
+                      <span className="font-cinzel font-bold text-white block">
+                        {formatPrice(order.totalAmount || 0)}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        {formatDate(order.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Low Stock Alerts (5 cols) */}
@@ -220,33 +248,39 @@ export default async function AdminDashboardPage() {
             <p className="text-xs text-gray-500 py-4">All vault allocations are currently healthy.</p>
           ) : (
             <div className="space-y-3">
-              {lowStockInventory.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="p-3 rounded-lg bg-obsidian-950/60 border border-obsidian-800 flex items-center justify-between gap-3 text-xs"
-                >
-                  <div>
-                    <span className="font-semibold text-white block truncate max-w-[200px]">
-                      {inv.product.name}
-                    </span>
-                    <span className="text-[10px] text-gray-500 font-mono">
-                      {inv.product.brand.name} • SKU: {inv.product.sku}
-                    </span>
-                  </div>
+              {lowStockInventory.map((inv) => {
+                const productName = inv.product?.name || 'Timepiece Reference';
+                const brandName = inv.product?.brand?.name || 'Maison';
+                const sku = inv.product?.sku || 'N/A';
 
-                  <div className="flex items-center gap-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                      {inv.stockQuantity} Left
-                    </span>
-                    <Link
-                      href="/admin/inventory"
-                      className="text-gold-400 hover:text-gold-300 underline font-semibold text-[11px]"
-                    >
-                      Restock
-                    </Link>
+                return (
+                  <div
+                    key={inv.id}
+                    className="p-3 rounded-lg bg-obsidian-950/60 border border-obsidian-800 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div>
+                      <span className="font-semibold text-white block truncate max-w-[200px]">
+                        {productName}
+                      </span>
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        {brandName} • SKU: {sku}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                        {inv.stockQuantity} Left
+                      </span>
+                      <Link
+                        href="/admin/inventory"
+                        className="text-gold-400 hover:text-gold-300 underline font-semibold text-[11px]"
+                      >
+                        Restock
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

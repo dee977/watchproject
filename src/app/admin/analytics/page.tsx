@@ -1,32 +1,43 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
-import { formatPrice } from '@/lib/currency';
 import { AnalyticsCards } from '@/components/admin/AnalyticsCards';
 import { RevenueChart } from '@/components/admin/RevenueChart';
-import { TrendingUp, Award, DollarSign, Users, ShoppingBag } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminAnalyticsPage() {
-  const [orders, products, customers, categories] = await Promise.all([
-    prisma.order.findMany({
-      include: { items: true },
-      orderBy: { createdAt: 'desc' },
-    }),
-    prisma.product.findMany({
-      where: { isPublished: true },
-      include: {
-        inventory: true,
-        orderItems: true,
-      },
-    }),
-    prisma.user.count({ where: { role: 'CUSTOMER' } }),
-    prisma.category.findMany({
-      select: { name: true, _count: { select: { products: true } } },
-    }),
-  ]);
+  let orders: any[] = [];
+  let products: any[] = [];
+  let customers = 0;
+  let categories: any[] = [];
 
-  const grossRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+  try {
+    const [ordersRes, prodsRes, custCountRes, catRes] = await Promise.all([
+      prisma.order.findMany({
+        include: { items: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.product.findMany({
+        where: { isPublished: true },
+        include: {
+          inventory: true,
+          orderItems: true,
+        },
+      }),
+      prisma.user.count({ where: { role: 'CUSTOMER' } }),
+      prisma.category.findMany({
+        select: { name: true, _count: { select: { products: true } } },
+      }),
+    ]);
+    orders = ordersRes || [];
+    products = prodsRes || [];
+    customers = custCountRes || 0;
+    categories = catRes || [];
+  } catch (error) {
+    console.error('[AdminAnalyticsPage] Analytics queries error:', error);
+  }
+
+  const grossRevenue = orders.reduce((sum: number, o: any) => sum + (Number(o?.totalAmount) || 0), 0);
   const totalOrders = orders.length;
   const aov = totalOrders > 0 ? Math.round(grossRevenue / totalOrders) : 0;
   const lowStockCount = products.filter((p) => (p.inventory?.stockQuantity ?? 0) <= 3).length;
@@ -41,9 +52,10 @@ export default async function AdminAnalyticsPage() {
   }
 
   orders.forEach((o) => {
+    if (!o?.createdAt) return;
     const key = new Date(o.createdAt).toLocaleDateString('en-US', { weekday: 'short' });
     if (daysMap[key]) {
-      daysMap[key].revenue += o.totalAmount;
+      daysMap[key].revenue += Number(o.totalAmount) || 0;
       daysMap[key].orders += 1;
     }
   });
@@ -55,8 +67,8 @@ export default async function AdminAnalyticsPage() {
   }));
 
   const categoryShare = categories.map((c) => ({
-    category: c.name,
-    count: c._count.products,
+    category: c.name || 'General',
+    count: c._count?.products ?? 0,
   }));
 
   return (

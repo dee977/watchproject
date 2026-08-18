@@ -18,25 +18,35 @@ export const dynamic = 'force-dynamic';
 export default async function AdminOrderDetailPage({
   params,
 }: AdminOrderDetailPageProps) {
-  const order = await prisma.order.findFirst({
-    where: {
-      OR: [{ id: params.id }, { orderNumber: params.id }],
-    },
-    include: {
-      user: true,
-      items: true,
-      payments: true,
-      shipments: true,
-      returnRequests: true,
-    },
-  });
+  let order: any = null;
+  try {
+    order = await prisma.order.findFirst({
+      where: {
+        OR: [{ id: params.id }, { orderNumber: params.id }],
+      },
+      include: {
+        user: true,
+        items: true,
+        payments: true,
+        shipments: true,
+        returnRequests: true,
+      },
+    });
+  } catch (err) {
+    console.error('[AdminOrderDetailPage] Order lookup error:', err);
+  }
 
   if (!order) {
     notFound();
   }
 
-  const shippingAddress = JSON.parse(order.shippingAddressSnapshot || '{}');
-  const latestShipment = order.shipments[0];
+  let shippingAddress: any = {};
+  try {
+    shippingAddress = JSON.parse(order.shippingAddressSnapshot || '{}');
+  } catch (e) {
+    shippingAddress = { addressLine1: order.shippingAddressSnapshot || '' };
+  }
+  const latestShipment = order.shipments?.[0];
 
   return (
     <div className="space-y-8">
@@ -79,29 +89,38 @@ export default async function AdminOrderDetailPage({
           {/* Items */}
           <div className="p-6 rounded-xl bg-obsidian-900/40 border border-obsidian-800 space-y-4">
             <h2 className="font-cinzel text-xs uppercase tracking-luxury text-gold-400 font-semibold">
-              Acquired Timepieces ({order.items.length})
+              Acquired Timepieces ({order.items?.length || 0})
             </h2>
 
             <div className="divide-y divide-obsidian-800">
-              {order.items.map((item) => (
+              {(order.items || []).map((item: any) => (
                 <div key={item.id} className="py-3.5 flex items-center justify-between gap-4 text-xs">
                   <div className="flex items-center gap-3">
                     {item.productImage && (
                       <div className="relative w-12 h-12 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
-                        <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                        <Image
+                          src={item.productImage}
+                          alt={item.productName || 'Timepiece'}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                          onError={(e) => {
+                            (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                          }}
+                        />
                       </div>
                     )}
                     <div>
-                      <strong className="text-white block">{item.productName}</strong>
+                      <strong className="text-white block">{item.productName || 'Timepiece Reference'}</strong>
                       <span className="text-[10px] text-gray-500 font-mono">
-                        {item.brandName} • SKU: {item.productSku}
+                        {item.brandName || 'Maison'} • SKU: {item.productSku || 'N/A'}
                       </span>
-                      <p className="text-[11px] text-gray-400">Qty: {item.quantity} × {formatPrice(item.unitPrice)}</p>
+                      <p className="text-[11px] text-gray-400">Qty: {item.quantity} × {formatPrice(item.unitPrice || 0)}</p>
                     </div>
                   </div>
 
                   <span className="font-semibold text-gold-300 font-cinzel">
-                    {formatPrice(item.totalPrice)}
+                    {formatPrice(item.totalPrice || 0)}
                   </span>
                 </div>
               ))}

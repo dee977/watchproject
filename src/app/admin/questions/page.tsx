@@ -1,32 +1,36 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatDate } from '@/lib/utils';
-import { MessageSquare, Send, CheckCircle2, User } from 'lucide-react';
 import { AdminQuestionsManager } from '@/components/admin/AdminQuestionsManager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminQuestionsPage() {
-  const questions = await prisma.question.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      product: { select: { id: true, name: true, sku: true } },
-      user: { select: { name: true, email: true } },
-      answers: { orderBy: { createdAt: 'asc' } },
-    },
-  });
+  let questions: any[] = [];
+  try {
+    questions = await prisma.question.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        product: { select: { id: true, name: true, sku: true } },
+        user: { select: { name: true, email: true } },
+        answers: { orderBy: { createdAt: 'asc' } },
+      },
+    });
+  } catch (error) {
+    console.error('[AdminQuestionsPage] Questions query error:', error);
+  }
 
-  const formatted = questions.map((q) => ({
+  const formatted = (questions || []).map((q) => ({
     id: q.id,
-    productName: q.product.name,
-    productSku: q.product.sku,
-    userName: q.user.name,
-    userEmail: q.user.email,
+    productName: q.product?.name || 'Archived Timepiece',
+    productSku: q.product?.sku || 'N/A',
+    userName: q.user?.name || 'VIP Client',
+    userEmail: q.user?.email || '',
     questionText: q.questionText,
     createdAt: formatDate(q.createdAt),
-    answers: q.answers.map((a) => ({
+    answers: (q.answers || []).map((a: any) => ({
       id: a.id,
-      authorName: a.authorName,
+      authorName: a.authorName || 'Concierge',
       answerText: a.answerText,
       createdAt: formatDate(a.createdAt),
     })),

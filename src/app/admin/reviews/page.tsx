@@ -1,29 +1,33 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
 import { formatDate } from '@/lib/utils';
-import { Star, ShieldCheck, Check, X, Trash2 } from 'lucide-react';
 import { AdminReviewsModerator } from '@/components/admin/AdminReviewsModerator';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminReviewsPage() {
-  const reviews = await prisma.review.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      product: {
-        select: { id: true, name: true, sku: true, images: { take: 1, select: { url: true } } },
+  let reviews: any[] = [];
+  try {
+    reviews = await prisma.review.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        product: {
+          select: { id: true, name: true, sku: true, images: { take: 1, select: { url: true } } },
+        },
+        user: { select: { name: true, email: true } },
       },
-      user: { select: { name: true, email: true } },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('[AdminReviewsPage] Reviews query error:', error);
+  }
 
-  const formatted = reviews.map((r) => ({
+  const formatted = (reviews || []).map((r) => ({
     id: r.id,
-    productName: r.product.name,
-    productSku: r.product.sku,
-    productImage: r.product.images[0]?.url || '',
-    userName: r.user.name,
-    userEmail: r.user.email,
+    productName: r.product?.name || 'Archived Reference',
+    productSku: r.product?.sku || 'N/A',
+    productImage: r.product?.images?.[0]?.url || '',
+    userName: r.user?.name || 'VIP Client',
+    userEmail: r.user?.email || '',
     rating: r.rating,
     title: r.title,
     comment: r.comment,

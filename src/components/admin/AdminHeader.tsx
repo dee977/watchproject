@@ -50,12 +50,12 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ user }) => {
         {/* User Card & Logout */}
         <div className="flex items-center gap-4 pl-4 border-l border-obsidian-800">
           <div className="text-right">
-            <div className="text-white font-semibold">{user.name}</div>
-            <div className="text-[10px] text-gray-500 font-mono">{user.email}</div>
+            <div className="text-white font-semibold">{user?.name || 'Administrator'}</div>
+            <div className="text-[10px] text-gray-500 font-mono">{user?.email || ''}</div>
           </div>
 
           <div className="w-8 h-8 rounded-full bg-gold-500/20 border border-gold-500/40 text-gold-300 font-bold text-xs flex items-center justify-center">
-            {user.name.charAt(0).toUpperCase()}
+            {(user?.name || 'A').charAt(0).toUpperCase()}
           </div>
 
           <button

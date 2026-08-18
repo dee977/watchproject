@@ -1,42 +1,45 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
-import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
-import { RotateCcw, ShieldCheck, Check, X, AlertCircle } from 'lucide-react';
 import { AdminReturnsManager } from '@/components/admin/AdminReturnsManager';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminReturnsPage() {
-  const returns = await prisma.returnRequest.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: {
-      order: {
-        include: {
-          items: true,
+  let returns: any[] = [];
+  try {
+    returns = await prisma.returnRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        order: {
+          include: {
+            items: true,
+          },
         },
+        user: { select: { name: true, email: true, phone: true } },
       },
-      user: { select: { name: true, email: true, phone: true } },
-    },
-  });
+    });
+  } catch (error) {
+    console.error('[AdminReturnsPage] Returns query error:', error);
+  }
 
-  const formatted = returns.map((r) => ({
+  const formatted = (returns || []).map((r) => ({
     id: r.id,
     orderId: r.orderId,
-    orderNumber: r.order.orderNumber,
-    userName: r.user.name,
-    userEmail: r.user.email,
+    orderNumber: r.order?.orderNumber || 'N/A',
+    userName: r.user?.name || 'VIP Client',
+    userEmail: r.user?.email || '',
     reason: r.reason,
     description: r.description,
     status: r.status,
     refundAmount: r.refundAmount,
     adminNotes: r.adminNotes,
-    orderTotal: r.order.totalAmount,
+    orderTotal: r.order?.totalAmount || 0,
     createdAt: formatDate(r.createdAt),
-    items: r.order.items.map((i) => ({
-      name: i.productName,
-      quantity: i.quantity,
-      price: i.totalPrice,
+    items: (r.order?.items || []).map((i: any) => ({
+      name: i.productName || 'Timepiece',
+      quantity: i.quantity || 1,
+      price: i.totalPrice || 0,
     })),
   }));
 
