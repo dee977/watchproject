@@ -32,7 +32,7 @@ const ProductInputSchema = z.object({
   isBestSeller: z.boolean().default(false),
   isNewArrival: z.boolean().default(false),
   isPublished: z.boolean().default(true),
-  images: z.array(z.string().url()).min(1),
+  images: z.array(z.string()).min(1),
   specs: z.array(z.object({ group: z.string(), key: z.string(), value: z.string() })).optional(),
 });
 

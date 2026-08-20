@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import {
   CheckCircle2,
@@ -156,7 +157,12 @@ export default async function OrderConfirmationPage({
                       <div className="flex items-center gap-3">
                         {item.productImage && (
                           <div className="relative w-10 h-10 rounded bg-obsidian-950 overflow-hidden flex-shrink-0 print:hidden">
-                            <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                            <Image
+                              src={getProductImageUrl(item.productImage, FALLBACK_WATCH_IMAGE)}
+                              alt={item.productName}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                         )}
                         <div>

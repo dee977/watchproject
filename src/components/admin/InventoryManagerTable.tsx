@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Plus, Minus, Search, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { formatPrice } from '@/lib/currency';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface InventoryItem {
   id: string;
@@ -118,13 +119,13 @@ export const InventoryManagerTable: React.FC<{ initialData: InventoryItem[] }> =
                         {item.image && (
                           <div className="relative w-10 h-10 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
                             <Image
-                              src={item.image}
+                              src={getProductImageUrl(item.image, FALLBACK_WATCH_IMAGE)}
                               alt={item.productName}
                               fill
                               sizes="40px"
                               className="object-cover"
                               onError={(e) => {
-                                (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                                (e.target as any).src = FALLBACK_WATCH_IMAGE;
                               }}
                             />
                           </div>

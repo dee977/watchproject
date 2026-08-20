@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { RotateCw, MoveHorizontal } from 'lucide-react';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface Product360ViewerProps {
   images: Array<{ url: string }>;
@@ -60,7 +61,7 @@ export const Product360Viewer: React.FC<Product360ViewerProps> = ({
         className="relative aspect-square max-w-sm mx-auto rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 cursor-grab active:cursor-grabbing select-none"
       >
         <Image
-          src={images[frameIndex]?.url || images[0]?.url}
+          src={getProductImageUrl(images[frameIndex]?.url || images[0]?.url, FALLBACK_WATCH_IMAGE)}
           alt={`${productName} 360 Angle ${frameIndex + 1}`}
           fill
           className="object-cover pointer-events-none"

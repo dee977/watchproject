@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { X, Trash2, Plus, Minus, ArrowRight, ShieldCheck, ShoppingBag, Sparkles } from 'lucide-react';
 import { useCartStore } from '@/lib/cart-store';
 import { formatPrice } from '@/lib/currency';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface CartDrawerProps {
   freeShippingThreshold?: number;
@@ -108,13 +109,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   {/* Thumbnail */}
                   <div className="relative w-20 h-20 bg-obsidian-950 rounded overflow-hidden flex-shrink-0 border border-obsidian-800">
                     <Image
-                      src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'}
+                      src={getProductImageUrl(item.image, FALLBACK_WATCH_IMAGE)}
                       alt={item.name}
                       fill
                       sizes="80px"
                       className="object-cover"
                       onError={(e) => {
-                        (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                        (e.target as any).src = FALLBACK_WATCH_IMAGE;
                       }}
                     />
                   </div>

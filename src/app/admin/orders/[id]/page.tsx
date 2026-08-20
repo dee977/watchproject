@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import { ArrowLeft, Printer, Truck, ShieldCheck, Mail } from 'lucide-react';
 import { AdminOrderFulfillForm } from '@/components/admin/AdminOrderFulfillForm';
@@ -99,7 +100,7 @@ export default async function AdminOrderDetailPage({
                     {item.productImage && (
                       <div className="relative w-12 h-12 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
                         <Image
-                          src={item.productImage}
+                          src={getProductImageUrl(item.productImage, FALLBACK_WATCH_IMAGE)}
                           alt={item.productName || 'Timepiece'}
                           fill
                           sizes="48px"

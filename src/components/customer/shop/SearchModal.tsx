@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Search, X, Clock, ArrowRight, Loader2, Sparkles, Tag } from 'lucide-react';
 import { formatPrice } from '@/lib/currency';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface SearchResult {
   products: Array<{
@@ -220,13 +221,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                         >
                           <div className="relative w-14 h-14 bg-obsidian-950 rounded overflow-hidden flex-shrink-0 border border-obsidian-800">
                             <Image
-                              src={item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80'}
+                              src={getProductImageUrl(item.image, FALLBACK_WATCH_IMAGE)}
                               alt={item.name}
                               fill
                               sizes="56px"
                               className="object-cover group-hover:scale-105 transition-transform"
                               onError={(e) => {
-                                (e.target as any).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
+                                (e.target as any).src = FALLBACK_WATCH_IMAGE;
                               }}
                             />
                           </div>

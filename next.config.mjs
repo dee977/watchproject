@@ -1,4 +1,12 @@
 /** @type {import('next').NextConfig} */
+const envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let dynamicSupabaseHost = 'regucynzyykcqhjvreiw.supabase.co';
+if (envSupabaseUrl) {
+  try {
+    dynamicSupabaseHost = new URL(envSupabaseUrl).hostname;
+  } catch {}
+}
+
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -6,10 +14,32 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'regucynzyykcqhjvreiw.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'regucynzyykcqhjvreiw.supabase.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: dynamicSupabaseHost,
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: dynamicSupabaseHost,
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/**',
       },
       {
         protocol: 'https',
@@ -36,3 +66,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

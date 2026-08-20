@@ -12,7 +12,9 @@ import {
   AlertCircle,
   Loader2,
   Layers,
+  Upload,
 } from 'lucide-react';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 
 interface ProductFormProps {
   initialData?: any;
@@ -78,13 +80,48 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   );
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const handleAddImage = () => {
     if (!newImageUrl.trim()) return;
-    setImages([...images, newImageUrl.trim()]);
+    const normalized = getProductImageUrl(newImageUrl.trim());
+    setImages([...images, normalized]);
     setNewImageUrl('');
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    setErrorMessage('');
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+
+      if (data.url) {
+        const normalized = getProductImageUrl(data.url);
+        setImages((prev) => [...prev, normalized]);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Image upload failed.');
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
   };
 
   const handleRemoveImage = (idx: number) => {
@@ -363,47 +400,78 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <span>4. High-Resolution Visual Gallery</span>
         </h2>
 
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            placeholder="Paste high-res image URL (Unsplash or CDN)..."
-            className="flex-1 bg-obsidian-950 border border-obsidian-800 rounded px-3.5 py-2 text-white placeholder-gray-500 focus:border-gold-500 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={handleAddImage}
-            className="btn-gold px-4 py-2 rounded font-semibold"
-          >
-            Add Image
-          </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 flex gap-2">
+            <input
+              type="text"
+              value={newImageUrl}
+              onChange={(e) => setNewImageUrl(e.target.value)}
+              placeholder="Paste Supabase storage path or image URL..."
+              className="flex-1 bg-obsidian-950 border border-obsidian-800 rounded px-3.5 py-2 text-white placeholder-gray-500 focus:border-gold-500 focus:outline-none text-xs"
+            />
+            <button
+              type="button"
+              onClick={handleAddImage}
+              className="btn-gold px-4 py-2 rounded font-semibold text-xs whitespace-nowrap"
+            >
+              Add URL
+            </button>
+          </div>
+
+          <label className="btn-outline-gold px-4 py-2 rounded font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap">
+            {isUploadingImage ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-gold-400" />
+                <span>Uploading...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 text-gold-400" />
+                <span>Upload to Supabase</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              disabled={isUploadingImage}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">
-          {images.map((url, idx) => (
-            <div
-              key={idx}
-              className="relative aspect-square rounded bg-obsidian-950 border border-obsidian-800 overflow-hidden group"
-            >
-              <Image src={url} alt={`Preview ${idx + 1}`} fill className="object-cover" />
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(idx)}
-                  className="p-2 rounded-full bg-rose-500 text-white"
-                  title="Remove Image"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+          {images.map((url, idx) => {
+            const previewSrc = getProductImageUrl(url, FALLBACK_WATCH_IMAGE);
+            return (
+              <div
+                key={idx}
+                className="relative aspect-square rounded bg-obsidian-950 border border-obsidian-800 overflow-hidden group"
+              >
+                <Image
+                  src={previewSrc}
+                  alt={`Preview ${idx + 1}`}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="p-2 rounded-full bg-rose-500 text-white"
+                    title="Remove Image"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                {idx === 0 && (
+                  <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-gold-500 text-obsidian-950">
+                    Primary
+                  </span>
+                )}
               </div>
-              {idx === 0 && (
-                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded text-[9px] font-bold bg-gold-500 text-obsidian-950">
-                  Primary
-                </span>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

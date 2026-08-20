@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import {
   ArrowLeft,
@@ -128,7 +129,12 @@ export default async function AccountOrderDetailPage({
               <div className="flex items-center gap-4">
                 {item.productImage && (
                   <div className="relative w-14 h-14 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
-                    <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                    <Image
+                      src={getProductImageUrl(item.productImage, FALLBACK_WATCH_IMAGE)}
+                      alt={item.productName}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 )}
                 <div>

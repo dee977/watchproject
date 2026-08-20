@@ -1,4 +1,5 @@
 import {
+  getProductImageUrl,
   getPublicImageUrl,
   getProductPrimaryImage,
   getProductSecondaryImage,
@@ -41,30 +42,30 @@ async function runImageTestSuite() {
   // 2. Test Supabase permanent public URL formatting
   console.log('\n--- 2. Testing Supabase Permanent Public URL Normalization ---');
 
-  // A. Direct filename
-  const filenameResult = getPublicImageUrl('rolex-submariner.jpg');
+  // A. Direct filename with spaces
+  const filenameWithSpaces = getProductImageUrl('WhatsApp Image 2026-08-18 at 8.37.02 PM.jpeg');
   assert(
-    filenameResult === 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/rolex-submariner.jpg',
-    'Direct storage filename converted to full permanent public Supabase URL'
+    filenameWithSpaces === 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/WhatsApp%20Image%202026-08-18%20at%208.37.02%20PM.jpeg',
+    'Direct storage filename with spaces safely encoded into valid public Supabase URL'
   );
 
   // B. Relative path with /image/ prefix
-  const relativeResult = getPublicImageUrl('image/omega-speedmaster.png');
+  const relativeResult = getProductImageUrl('image/omega-speedmaster.png');
   assert(
     relativeResult === 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/omega-speedmaster.png',
     'Relative path "image/..." stripped and normalized correctly'
   );
 
-  // C. Full public URL preserved
+  // C. Full public URL preserved with space encoding
   const fullPublicUrl = 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/tag-heuer.jpg';
   assert(
-    getPublicImageUrl(fullPublicUrl) === fullPublicUrl,
+    getProductImageUrl(fullPublicUrl) === fullPublicUrl,
     'Existing full public Supabase URL preserved intact'
   );
 
   // D. Signed URL converted to permanent public URL
   const signedUrl = 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/sign/image/rolex-gmt.jpg?token=abc123expired';
-  const convertedSigned = getPublicImageUrl(signedUrl);
+  const convertedSigned = getProductImageUrl(signedUrl);
   assert(
     convertedSigned === 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/rolex-gmt.jpg',
     'Temporary signed URL correctly stripped and converted to permanent public URL'
@@ -72,7 +73,7 @@ async function runImageTestSuite() {
 
   // E. Placeholder replacement (placehold.co rejected)
   const placeholderUrl = 'https://placehold.co/600x600/png?text=Watch';
-  const placeholderCleaned = getPublicImageUrl(placeholderUrl);
+  const placeholderCleaned = getProductImageUrl(placeholderUrl);
   assert(
     placeholderCleaned === FALLBACK_WATCH_IMAGE,
     'Low-quality placeholder URL (placehold.co) replaced with verified luxury watch image'
@@ -80,11 +81,19 @@ async function runImageTestSuite() {
 
   // F. Null / empty fallback
   assert(
-    getPublicImageUrl(null) === FALLBACK_WATCH_IMAGE && getPublicImageUrl('') === FALLBACK_WATCH_IMAGE,
+    getProductImageUrl(null) === FALLBACK_WATCH_IMAGE && getProductImageUrl('') === FALLBACK_WATCH_IMAGE,
     'Null or empty image string safely falls back to luxury watch image'
   );
 
-  // 3. Test Primary & Secondary Image Extraction
+  // G. Double prefix unwrap
+  const doublePrefix = 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/https://images.unsplash.com/photo-1523275335684?w=800';
+  const unwrapped = getProductImageUrl(doublePrefix);
+  assert(
+    unwrapped === 'https://images.unsplash.com/photo-1523275335684?w=800',
+    'Accidental double Supabase URL prefix cleanly unwrapped to inner URL'
+  );
+
+  // 3. Test Primary & Secondary Image Resolution
   console.log('\n--- 3. Testing Primary & Secondary Image Resolution ---');
 
   const testImages = [
@@ -108,6 +117,20 @@ async function runImageTestSuite() {
   assert(
     emptyPrimary === FALLBACK_WATCH_IMAGE,
     'Empty images array falls back gracefully to default luxury timepiece image'
+  );
+
+  // 4. Test Array of Strings
+  const stringArray = ['watch-1.jpg', 'watch-2.jpg'];
+  assert(
+    getProductPrimaryImage(stringArray) === 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/watch-1.jpg',
+    'String array correctly resolves primary item'
+  );
+
+  // 5. Test JSON stringified array
+  const jsonArray = JSON.stringify(['watch-json-1.jpg', 'watch-json-2.jpg']);
+  assert(
+    getProductImageUrl(jsonArray) === 'https://regucynzyykcqhjvreiw.supabase.co/storage/v1/object/public/image/watch-json-1.jpg',
+    'JSON stringified array parses and resolves first element'
   );
 
   console.log('\n====================================================');

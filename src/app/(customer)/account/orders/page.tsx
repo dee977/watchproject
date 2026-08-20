@@ -5,6 +5,7 @@ import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { formatPrice } from '@/lib/currency';
 import { formatDate } from '@/lib/utils';
+import { getProductImageUrl, FALLBACK_WATCH_IMAGE } from '@/lib/images';
 import { OrderStatusBadge } from '@/components/shared/OrderStatusBadge';
 import { Package, Truck, ExternalLink, Printer, ArrowRight } from 'lucide-react';
 
@@ -88,7 +89,12 @@ export default async function AccountOrdersPage() {
                       <div className="flex items-center gap-3">
                         {item.productImage && (
                           <div className="relative w-12 h-12 rounded bg-obsidian-950 overflow-hidden border border-obsidian-800 flex-shrink-0">
-                            <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
+                            <Image
+                              src={getProductImageUrl(item.productImage, FALLBACK_WATCH_IMAGE)}
+                              alt={item.productName}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                         )}
                         <div>
