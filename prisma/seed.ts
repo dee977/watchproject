@@ -209,7 +209,7 @@ async function main() {
       foundedYear: 1848,
       isFeatured: true,
       description: 'Master Chronometer precision, deep ocean mastery, and the legendary official Moonwatch lineage.',
-      logo: 'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=300&q=80',
+      logo: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=300&q=80',
       bannerImage: 'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=1600&q=80',
     },
     {
@@ -283,7 +283,7 @@ async function main() {
       slug: 'chronograph',
       description: 'Multi-register stopwatches engineered for precision timing on race tracks and cockpits.',
       isFeatured: true,
-      image: 'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=800&q=80',
+      image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80',
     },
     {
       name: 'Dress Watches',
@@ -334,7 +334,7 @@ async function main() {
       slug: 'heritage-grand-prix',
       description: 'Iconic vintage-inspired chronographs celebrating the golden era of motorsport.',
       isFeatured: true,
-      coverImage: 'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=1200&q=80',
+      coverImage: 'https://images.unsplash.com/photo-1533139502658-0198f920d8e8?auto=format&fit=crop&w=1200&q=80',
     },
     {
       name: 'Abyssal Marine Pro',
@@ -483,7 +483,7 @@ async function main() {
       isNewArrival: false,
       stockQuantity: 4,
       images: [
-        'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=1000&q=80',
+        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1000&q=80',
         'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=1000&q=80',
         'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1000&q=80',
       ],
@@ -758,7 +758,7 @@ async function main() {
       isNewArrival: false,
       stockQuantity: 3,
       images: [
-        'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=1000&q=80',
+        'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1000&q=80',
         'https://images.unsplash.com/photo-1508057198894-247b23fe5ade?auto=format&fit=crop&w=1000&q=80',
       ],
       specs: [

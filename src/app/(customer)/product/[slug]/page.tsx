@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
 import { formatPrice } from '@/lib/currency';
+import { getProductImageUrl } from '@/lib/images';
 import { ProductGallery } from '@/components/customer/shop/ProductGallery';
 import { Product360Viewer } from '@/components/customer/shop/Product360Viewer';
 import { SpecificationTable } from '@/components/customer/shop/SpecificationTable';
@@ -21,32 +22,40 @@ interface ProductPageProps {
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const product = await prisma.product.findUnique({
-    where: { slug: params.slug },
-    include: { brand: true, images: { take: 1 } },
-  });
+  try {
+    const product = await prisma.product.findUnique({
+      where: { slug: params.slug },
+      include: { brand: true, images: { take: 1 } },
+    });
 
-  if (!product) return { title: 'Timepiece Not Found | AURELIA' };
+    if (!product) return { title: 'Timepiece Not Found | AURELIA' };
 
-  const title = `${product.name} | ${product.brand.name} | AURELIA`;
-  const description = product.shortDescription || product.description.substring(0, 160);
-  const imageUrl = product.images[0]?.url || '';
+    const title = `${product.name} | ${product.brand?.name || 'AURELIA'} | AURELIA`;
+    const description = product.shortDescription || product.description?.substring(0, 160) || '';
+    const imageUrl = getProductImageUrl(product.images[0]?.url);
 
-  return {
-    title,
-    description,
-    openGraph: {
+    return {
       title,
       description,
-      images: [{ url: imageUrl, alt: product.name }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [imageUrl],
-    },
-  };
+      openGraph: {
+        title,
+        description,
+        images: [{ url: imageUrl, alt: product.name }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [imageUrl],
+      },
+    };
+  } catch (err) {
+    console.error('generateMetadata error for slug:', params.slug, err);
+    return {
+      title: 'Luxury Timepiece | AURELIA',
+      description: 'Explore certified luxury timepieces at AURELIA.',
+    };
+  }
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {

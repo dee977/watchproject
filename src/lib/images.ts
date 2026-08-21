@@ -20,11 +20,19 @@ export function getSupabaseStorageBucket(): string {
 
 export const SUPABASE_STORAGE_BASE_URL = `${getSupabaseOrigin()}/storage/v1/object/public/${getSupabaseStorageBucket()}/`;
 
+export const LOCAL_PLACEHOLDER_WATCH = '/placeholder-watch.svg';
+
 export const FALLBACK_WATCH_IMAGE =
   'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80';
 
 export const FALLBACK_SECONDARY_WATCH_IMAGE =
   'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=800&q=80';
+
+/** List of known deleted/broken upstream Unsplash photo IDs */
+const KNOWN_BROKEN_IMAGE_PATTERNS = [
+  '1547996160-71dfa635826f',
+  '1547996160',
+];
 
 /**
  * Safely encodes path components in an image URL to ensure spaces and special characters
@@ -51,6 +59,7 @@ function safelyEncodeUrl(urlStr: string): string {
  * - Direct filenames (e.g. "WhatsApp Image 2026-08-18 at 8.37.02 PM.jpeg", "watch1.jpg")
  * - Signed URLs (/storage/v1/object/sign/... -> converts to permanent public URL without expired signature query)
  * - Placeholders (replaces placehold.co, etc. with luxury fallback image)
+ * - Known broken URLs (replaces deleted Unsplash photos with verified fallback)
  * - Double Supabase prefixes (e.g. ".../public/image/https://..." -> cleanly unwraps to "https://...")
  * - JSON stringified arrays or objects
  * - Null / undefined / empty string -> returns fallback
@@ -86,6 +95,13 @@ export function getProductImageUrl(
   let clean = image.trim();
   if (!clean) return fallback;
 
+  // Immediately filter out known broken external URLs
+  for (const pattern of KNOWN_BROKEN_IMAGE_PATTERNS) {
+    if (clean.includes(pattern)) {
+      return fallback;
+    }
+  }
+
   // Handle JSON array or JSON object string
   if (clean.startsWith('[') || clean.startsWith('{')) {
     try {
@@ -115,6 +131,13 @@ export function getProductImageUrl(
     const insecureHttpIndex = clean.indexOf('http://', 8);
     if (insecureHttpIndex !== -1) {
       clean = clean.substring(insecureHttpIndex);
+    }
+  }
+
+  // Check again after unwrapping double prefixes
+  for (const pattern of KNOWN_BROKEN_IMAGE_PATTERNS) {
+    if (clean.includes(pattern)) {
+      return fallback;
     }
   }
 

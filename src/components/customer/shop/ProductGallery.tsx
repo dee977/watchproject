@@ -33,6 +33,8 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
     setZoomPos({ x, y });
   };
 
+  const [thumbErrors, setThumbErrors] = useState<Record<number, boolean>>({});
+
   return (
     <div className="space-y-4">
       {/* Primary Display with Zoom */}
@@ -76,7 +78,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
       {images.length > 1 && (
         <div className="flex gap-3 overflow-x-auto pb-2">
           {images.map((img, idx) => {
-            const thumbUrl = getPublicImageUrl(img.url);
+            const thumbUrl = thumbErrors[idx] ? FALLBACK_WATCH_IMAGE : getPublicImageUrl(img.url);
             return (
               <button
                 key={idx}
@@ -93,8 +95,8 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
                   fill
                   sizes="80px"
                   className="object-cover"
-                  onError={(e) => {
-                    (e.target as any).src = FALLBACK_WATCH_IMAGE;
+                  onError={() => {
+                    setThumbErrors((prev) => ({ ...prev, [idx]: true }));
                   }}
                 />
               </button>

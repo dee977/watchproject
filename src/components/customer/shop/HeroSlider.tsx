@@ -34,7 +34,7 @@ const DEFAULT_SLIDES: Slide[] = [
     tagline: 'LEGENDARY MOONWATCH PEDIGREE',
     title: 'THE CHRONOMETER ICON.',
     subtitle: 'METAS Master Chronometer certified co-axial calibers tested beyond the frontiers of extreme gravity.',
-    image: 'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=1920&q=85',
+    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1920&q=85',
     ctaText: 'View Chronographs',
     ctaLink: '/watches/chronograph',
     secondaryCtaText: 'Omega Lineage',

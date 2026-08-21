@@ -8,7 +8,7 @@ const BRAND_HERO_IMAGES: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1000&q=80',
   ],
   omega: [
-    'https://images.unsplash.com/photo-1547996160-71dfa635826f?auto=format&fit=crop&w=1000&q=80',
+    'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1000&q=80',
     'https://images.unsplash.com/photo-1539185441755-769473a23570?auto=format&fit=crop&w=1000&q=80',
   ],
   'tag heuer': [
